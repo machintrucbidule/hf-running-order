@@ -4,19 +4,23 @@ import FilterPanel from '../panels/FilterPanel';
 import SettingsPanel from '../panels/SettingsPanel';
 import CreditsPanel from '../panels/CreditsPanel';
 import ContactsPanel from '../panels/ContactsPanel';
+import FriendsPanel from '../panels/FriendsPanel';
 import ProfileModal from '../modals/ProfileModal';
 import ShareModal from '../modals/ShareModal';
 import { useCheckedState } from '../../context/CheckedStateContext';
+import { useAuth } from '../../context/AuthContext';
 import StatsPanel from '../panels/StatsPanel';
 
 const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact, isGuestMode, guestName, onExitGuestMode, onClearCustomEvents }) => {
-    const { userState } = useCheckedState();
+    const { userState, syncStatus } = useCheckedState();
+    const { user } = useAuth();
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [creditsOpen, setCreditsOpen] = useState(false);
     const [statsOpen, setStatsOpen] = useState(false);
     const [contactsOpen, setContactsOpen] = useState(false);
+    const [friendsOpen, setFriendsOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -38,6 +42,7 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
         if (id === 'stats') setStatsOpen(true);
         if (id === 'playlists') setPlaylistOpen(true);
         if (id === 'contacts') setContactsOpen(true);
+        if (id === 'friends') setFriendsOpen(true);
         if (id === 'settings') setSettingsOpen(true);
         if (id === 'credits') setCreditsOpen(true);
     };
@@ -69,6 +74,30 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                                 }}
                             >
                                 <i className="fa-solid fa-cloud-slash"></i>
+                            </span>
+                        )}
+                        {user && syncStatus === 'syncing' && (
+                            <span
+                                title="Synchronisation..."
+                                style={{ color: '#FFD700', fontSize: '0.8rem', animation: 'pulse 1.5s infinite' }}
+                            >
+                                <i className="fa-solid fa-arrows-rotate"></i>
+                            </span>
+                        )}
+                        {user && syncStatus === 'synced' && isOnline && (
+                            <span
+                                title="Synchronisé"
+                                style={{ color: '#4CAF50', fontSize: '0.8rem' }}
+                            >
+                                <i className="fa-solid fa-cloud"></i>
+                            </span>
+                        )}
+                        {user && syncStatus === 'error' && (
+                            <span
+                                title="Erreur de synchronisation"
+                                style={{ color: '#e74c3c', fontSize: '0.8rem' }}
+                            >
+                                <i className="fa-solid fa-cloud-exclamation"></i>
                             </span>
                         )}
                     </div>
@@ -179,6 +208,11 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                 contacts={contacts}
                 onDeleteContact={onDeleteContact}
                 onCheckContact={onCheckContact}
+            />
+
+            <FriendsPanel
+                isOpen={friendsOpen}
+                onClose={() => setFriendsOpen(false)}
             />
 
             {statsOpen && (

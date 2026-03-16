@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
+import { useAuth } from '../../context/AuthContext';
+import { useFriends } from '../../context/FriendsContext';
 import { useLineup } from '../../hooks/useLineup'; // Assuming this hook exists or we pass groups as prop
 import { STAGE_CONFIG, INTEREST_LEVELS } from '../../constants';
 // Reuse timeToMinutes for layout calcs
@@ -28,8 +30,11 @@ const ICONS = {
 
 const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent }) => {
     const { state, getInterestColor, getBandTag, cycleInterest } = useCheckedState();
+    const { user } = useAuth();
+    const { activeCircleId, circleMembers } = useFriends();
     const [filterMode, setFilterMode] = useState('favorites'); // 'favorites' or 'all'
     const [colorMode, setColorMode] = useState('transparent'); // 'transparent' or 'scene'
+    const [friendsMode, setFriendsMode] = useState(false); // false = mine only, true = mine + friends
     const [selectedScenes, setSelectedScenes] = useState(() => [...Object.keys(STAGE_CONFIG), 'CUSTOM']);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
 
@@ -79,18 +84,34 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
         }
     };
 
+    // Build set of band IDs tagged by friends
+    const friendsTaggedIds = useMemo(() => {
+        if (!friendsMode || !activeCircleId || !circleMembers.length || !user) return new Set();
+        const ids = new Set();
+        circleMembers
+            .filter(m => m.id !== user.uid)
+            .forEach(m => {
+                Object.entries(m.taggedBands || {}).forEach(([bandId, tag]) => {
+                    if (tag?.interest) ids.add(bandId);
+                });
+            });
+        return ids;
+    }, [friendsMode, activeCircleId, circleMembers, user]);
+
     // --- 1. FILTERING ---
     const filteredGroups = useMemo(() => {
         if (!groups) return [];
         let selection = groups.filter(g => selectedScenes.includes(g.SCENE));
 
-        // If 'favorites' mode, keep only tagged bands
+        // If 'favorites' mode, keep only tagged bands (mine + friends if enabled)
         if (filterMode === 'favorites') {
-            selection = selection.filter(g => state.taggedBands[g.id]);
+            selection = selection.filter(g =>
+                state.taggedBands[g.id] || (friendsMode && friendsTaggedIds.has(String(g.id)))
+            );
         }
 
         return selection;
-    }, [groups, filterMode, state.taggedBands, selectedScenes]);
+    }, [groups, filterMode, state.taggedBands, selectedScenes, friendsMode, friendsTaggedIds]);
 
     // --- 2. LAYOUT ALGORITHM (The "Clashfinder" Logic) ---
     const dayColumns = useMemo(() => {
@@ -207,6 +228,23 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             Couleurs Scènes
                         </button>
                     </div>
+                    {user && activeCircleId && circleMembers.length > 1 && (
+                        <div className="weekly-filters">
+                            <button
+                                className={`weekly-filter-btn ${!friendsMode ? 'active' : ''}`}
+                                onClick={() => setFriendsMode(false)}
+                            >
+                                Mes groupes
+                            </button>
+                            <button
+                                className={`weekly-filter-btn ${friendsMode ? 'active' : ''}`}
+                                onClick={() => setFriendsMode(true)}
+                            >
+                                <i className="fa-solid fa-users" style={{ marginRight: '4px', fontSize: '0.75rem' }}></i>
+                                + Amis
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -246,6 +284,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                 const stageColor = STAGE_CONFIG[item.band.SCENE]?.themeColor || '#555';
                                 const tagData = getBandTag(item.band.id);
                                 const isTagged = !!tagData;
+                                const isOnlyFriendTagged = !isTagged && friendsMode && friendsTaggedIds.has(String(item.band.id));
 
                                 // Dynamic Color Logic
                                 const interestColor = isTagged && tagData.interest
@@ -264,9 +303,10 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                             left: `${item.leftPct}%`,
                                             width: `${item.widthPct}%`,
                                             backgroundColor: colorMode === 'scene' ? stageColor : '#2a2a2a',
-                                            border: isTagged ? '0px solid white' : (colorMode === 'scene' ? `1px solid ${chroma(stageColor).darken(1.5).hex()}` : '1px solid rgba(255,255,255,0.1)'),
+                                            border: isTagged ? '0px solid white' : (isOnlyFriendTagged ? '1px dashed rgba(255,255,255,0.3)' : (colorMode === 'scene' ? `1px solid ${chroma(stageColor).darken(1.5).hex()}` : '1px solid rgba(255,255,255,0.1)')),
                                             borderLeft: `4px solid ${colorMode === 'scene' ? chroma(stageColor).darken(1.5).hex() : stageColor}`,
                                             color: '#fff',
+                                            opacity: isOnlyFriendTagged ? 0.7 : 1,
                                             boxShadow: colorMode === 'scene' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 4px rgba(0,0,0,0.4)'
                                         }}
                                         onClick={() => onGroupClick(item.band)}
@@ -285,6 +325,14 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                                     style={{ color: interestColor }}
                                                 >
                                                     ★
+                                                </div>
+                                            )}
+                                            {isOnlyFriendTagged && (
+                                                <div
+                                                    className="weekly-band-star"
+                                                    style={{ color: '#FF6B35', fontSize: '0.7rem' }}
+                                                >
+                                                    <i className="fa-solid fa-users"></i>
                                                 </div>
                                             )}
                                         </div>

@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { useCheckedState } from '../../context/CheckedStateContext';
+import { useAuth } from '../../context/AuthContext';
+import { useFriends } from '../../context/FriendsContext';
 import { INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '../../constants';
 // Import Logos
 import bandLogos from '../../data/bandLogos.json';
@@ -10,6 +12,20 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
     const cardRef = useRef(null);
     const positionRef = useRef(position);
     const { state, setInterest, setContext, getBandTag, getInterestColor, updateNote } = useCheckedState();
+    const { user } = useAuth();
+    const { activeCircleId, circleMembers } = useFriends();
+
+    // Friends who tagged this band
+    const friendsWhoTagged = useMemo(() => {
+        if (!activeCircleId || !circleMembers.length || !user) return [];
+        return circleMembers
+            .filter(m => m.id !== user.uid)
+            .filter(m => m.taggedBands?.[group.id]?.interest)
+            .map(m => ({
+                name: m.displayName || 'Anonyme',
+                interest: m.taggedBands[group.id].interest,
+            }));
+    }, [activeCircleId, circleMembers, group.id, user]);
     // ...
 
     // Helper to get logo safely (case insensitive?)
@@ -556,6 +572,34 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                     </div>
                 </div>
             </div>
+
+            {friendsWhoTagged.length > 0 && (
+                <div style={{
+                    padding: '4px 12px',
+                    fontSize: '0.75rem',
+                    color: '#bbb',
+                    backgroundColor: 'rgba(255,255,255,0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    flexWrap: 'wrap',
+                }}>
+                    <i className="fa-solid fa-users" style={{ color: '#888', fontSize: '0.65rem' }}></i>
+                    <span>Tagué par </span>
+                    {friendsWhoTagged.map((ft, i) => (
+                        <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <span style={{
+                                width: '6px', height: '6px',
+                                borderRadius: '50%',
+                                backgroundColor: getInterestColor(ft.interest),
+                                display: 'inline-block',
+                            }} />
+                            <span style={{ fontWeight: 500 }}>{ft.name}</span>
+                            {i < friendsWhoTagged.length - 1 && <span>, </span>}
+                        </span>
+                    ))}
+                </div>
+            )}
 
             <div className="card-tabs">
                 <button

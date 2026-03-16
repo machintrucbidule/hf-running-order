@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { HashRouter as Router, Route, Routes } from 'react-router-dom';
 import { DAYS } from './constants';
 import { CheckedStateProvider, useCheckedState } from './context/CheckedStateContext';
+import { useAuth } from './context/AuthContext';
+import { FriendsProvider } from './context/FriendsContext';
 import { useLineup } from './hooks/useLineup';
+import { fetchUserData, saveUserData } from './services/firestoreSync';
 import HeaderBar from './components/layout/HeaderBar';
 import Navigation from './components/layout/Navigation';
 import DayView from './components/views/DayView';
@@ -21,10 +24,10 @@ import { parseShareData } from './utils/sharingUtils';
 function AppContent() {
   const { data: groups, loading, error } = useLineup();
   const { state, setDay, setState, isGuestMode, guestRo, setGuestRo } = useCheckedState();
+  const { user } = useAuth();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [popoverPosition, setPopoverPosition] = useState(null);
   const [viewMode, setViewMode] = useState('day');
-
 
   const [customEvents, setCustomEvents] = useState(() => {
     const saved = localStorage.getItem('customEvents');
@@ -43,7 +46,9 @@ function AppContent() {
   });
   const [contactToOverwrite, setContactToOverwrite] = useState(null);
 
+  const appDataSynced = useRef(false);
 
+  // Persist to localStorage (unchanged)
   useEffect(() => {
     localStorage.setItem('contacts', JSON.stringify(contacts));
   }, [contacts]);
@@ -51,6 +56,41 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('customEvents', JSON.stringify(customEvents));
   }, [customEvents]);
+
+  // Initial sync of customEvents/contacts from Firestore
+  useEffect(() => {
+    if (!user || appDataSynced.current) return;
+    appDataSynced.current = true;
+
+    const doSync = async () => {
+      try {
+        const result = await fetchUserData(user.uid);
+        if (result.exists && result.data) {
+          if (result.data.customEvents) setCustomEvents(result.data.customEvents);
+          if (result.data.contacts) setContacts(result.data.contacts);
+        }
+      } catch (err) {
+        console.error('App data sync failed:', err);
+      }
+    };
+    doSync();
+  }, [user]);
+
+  // Write customEvents/contacts to Firestore on changes
+  useEffect(() => {
+    if (!user || !appDataSynced.current) return;
+    saveUserData(user.uid, { customEvents });
+  }, [customEvents, user]);
+
+  useEffect(() => {
+    if (!user || !appDataSynced.current) return;
+    saveUserData(user.uid, { contacts });
+  }, [contacts, user]);
+
+  // Reset sync flag on logout
+  useEffect(() => {
+    if (!user) appDataSynced.current = false;
+  }, [user]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -355,7 +395,9 @@ function App() {
   return (
     <CheckedStateProvider>
       <Router>
-        <AppContent />
+        <FriendsProvider>
+          <AppContent />
+        </FriendsProvider>
       </Router>
     </CheckedStateProvider>
   );

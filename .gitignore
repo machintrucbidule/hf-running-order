@@ -33,3 +33,6 @@ Thumbs.db
 # Cache
 .cache/
 .eslintcache
+
+# Claude Code
+.claude/

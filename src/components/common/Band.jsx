@@ -1,11 +1,27 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
+import { useAuth } from '../../context/AuthContext';
+import { useFriends } from '../../context/FriendsContext';
 import { INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
 
 const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes, dayEndMinutes }) => {
     const { GROUPE, SCENE, DEBUT, FIN, id } = group;
     const { state, getBandTag, getInterestColor, cycleInterest } = useCheckedState();
+    const { user } = useAuth();
+    const { activeCircleId, circleMembers } = useFriends();
+
+    // Friend indicators from active circle
+    const friendsTags = useMemo(() => {
+        if (!activeCircleId || !circleMembers.length || !user) return [];
+        return circleMembers
+            .filter(m => m.id !== user.uid)
+            .filter(m => m.taggedBands?.[id]?.interest)
+            .map(m => ({
+                name: m.displayName || 'Anonyme',
+                interest: m.taggedBands[id].interest,
+            }));
+    }, [activeCircleId, circleMembers, id, user]);
 
     const isSelected = selectedGroupId === id;
     const bandTag = getBandTag(id);
@@ -199,6 +215,25 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
                     {DEBUT.replace('h', ':')} - {FIN.replace('h', ':')}
                 </span>
             </div>
+
+            {/* Friend indicators from group */}
+            {friendsTags.length > 0 && (
+                <div className="friend-tags">
+                    {friendsTags.slice(0, 3).map((ft, i) => (
+                        <span
+                            key={i}
+                            className="friend-dot"
+                            title={ft.name}
+                            style={{
+                                backgroundColor: getInterestColor(ft.interest) || '#888',
+                            }}
+                        />
+                    ))}
+                    {friendsTags.length > 3 && (
+                        <span className="friend-dot-more">+{friendsTags.length - 3}</span>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

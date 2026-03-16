@@ -2,7 +2,7 @@
   "name": "running-order",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://DevinFafara.github.io/running-order/",
+  "homepage": "https://machintrucbidule.github.io/hf-running-order/",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -21,6 +21,7 @@
     "axios": "^1.13.4",
     "chroma-js": "^3.2.0",
     "crypto-js": "^4.2.0",
+    "firebase": "^12.10.0",
     "html2canvas": "^1.4.1",
     "lz-string": "^1.5.0",
     "query-string": "^9.3.1",

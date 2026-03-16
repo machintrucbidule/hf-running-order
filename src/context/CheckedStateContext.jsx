@@ -1,6 +1,8 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { DEFAULT_COLORS, INTEREST_LEVELS, CONTEXT_TAGS } from '../constants';
 import { migrateOldData } from '../utils/migrationUtils';
+import { useAuth } from './AuthContext';
+import { fetchUserData, saveUserData, saveUserDataImmediate } from '../services/firestoreSync';
 
 export const CheckedStateContext = createContext();
 
@@ -42,27 +44,32 @@ const INITIAL_STATE = {
     language: "fr",
 };
 
+const mergeWithInitialState = (data) => ({
+    ...INITIAL_STATE,
+    ...data,
+    scenes: {
+        ...INITIAL_STATE.scenes,
+        ...(data.scenes || {})
+    },
+    interestColors: {
+        ...getDefaultInterestColors(),
+        ...(data.interestColors || {})
+    }
+});
+
 export const CheckedStateProvider = ({ children }) => {
+    const { user, loading: authLoading } = useAuth();
+    const [syncStatus, setSyncStatus] = useState('idle');
+    const [hasSynced, setHasSynced] = useState(false);
+    const skipNextFirestoreWrite = useRef(false);
+
     const [state, setState] = useState(() => {
         try {
             const saved = localStorage.getItem('checkedState');
             if (saved) {
                 const parsed = JSON.parse(saved);
                 const migrated = migrateOldData(parsed);
-
-                const mergedState = {
-                    ...INITIAL_STATE,
-                    ...migrated,
-                    scenes: {
-                        ...INITIAL_STATE.scenes,
-                        ...(migrated.scenes || {})
-                    },
-                    interestColors: {
-                        ...getDefaultInterestColors(),
-                        ...(migrated.interestColors || {})
-                    }
-                };
-                return mergedState;
+                return mergeWithInitialState(migrated);
             }
         } catch (e) {
             console.error("Failed to load state", e);
@@ -82,9 +89,67 @@ export const CheckedStateProvider = ({ children }) => {
         return state;
     }, [state, guestRo]);
 
+    // Persist to localStorage
     useEffect(() => {
         localStorage.setItem('checkedState', JSON.stringify(state));
-    }, [state]);
+        // Only update the timestamp after initial sync, otherwise the freshly-written
+        // local timestamp would always beat the remote one on a new browser.
+        if (hasSynced) {
+            localStorage.setItem('checkedState_lastModified', String(Date.now()));
+        }
+    }, [state, hasSynced]);
+
+    // Initial sync on login
+    useEffect(() => {
+        if (authLoading || !user || hasSynced) return;
+
+        const doSync = async () => {
+            setSyncStatus('syncing');
+            try {
+                const result = await fetchUserData(user.uid);
+                if (!result.exists) {
+                    // First login: upload localStorage to Firestore
+                    await saveUserDataImmediate(user.uid, {
+                        checkedState: state,
+                        displayName: user.displayName || '',
+                    });
+                } else if (result.data.checkedState) {
+                    const localModified = parseInt(localStorage.getItem('checkedState_lastModified') || '0');
+                    const remoteModified = result.data.lastModified?.toMillis?.() || 0;
+
+                    if (remoteModified > localModified) {
+                        const remoteMigrated = migrateOldData(result.data.checkedState);
+                        skipNextFirestoreWrite.current = true;
+                        setState(mergeWithInitialState(remoteMigrated));
+                    }
+                }
+                setSyncStatus('synced');
+            } catch (err) {
+                console.error('Sync failed:', err);
+                setSyncStatus('error');
+            }
+            setHasSynced(true);
+        };
+        doSync();
+    }, [user, authLoading]);
+
+    // Write to Firestore on state changes (debounced)
+    useEffect(() => {
+        if (!user || !hasSynced) return;
+        if (skipNextFirestoreWrite.current) {
+            skipNextFirestoreWrite.current = false;
+            return;
+        }
+        saveUserData(user.uid, { checkedState: state });
+    }, [state, user, hasSynced]);
+
+    // Reset sync state on logout
+    useEffect(() => {
+        if (!user && !authLoading) {
+            setHasSynced(false);
+            setSyncStatus('idle');
+        }
+    }, [user, authLoading]);
 
     const resetState = () => {
         setState(INITIAL_STATE);
@@ -249,7 +314,8 @@ export const CheckedStateProvider = ({ children }) => {
             updateNote,
             toggleScene,
             setScenes,
-            clearAllFavorites
+            clearAllFavorites,
+            syncStatus,
         }}>
             {children}
         </CheckedStateContext.Provider>

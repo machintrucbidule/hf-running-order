@@ -1,16 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
+    const { user, loginWithGoogle, logout } = useAuth();
+    const [authLoading, setAuthLoading] = useState(false);
+
     if (!isOpen) return null;
 
     const MENU_ITEMS = [
         { id: 'stats', label: 'Mes Stats', icon: 'fa-solid fa-chart-pie', color: '#FFD700' },
         { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#1DB954' },
         { id: 'contacts', label: 'Mes Contacts', icon: 'fa-solid fa-address-book', color: '#2196F3' },
+        ...(user ? [{ id: 'friends', label: 'Mes Amis', icon: 'fa-solid fa-users', color: '#FF6B35' }] : []),
         { id: 'share', label: 'Partager', icon: 'fa-solid fa-share-nodes', color: '#9C27B0' },
         { id: 'settings', label: 'Paramètres', icon: 'fa-solid fa-gear', color: '#aaa' },
         { id: 'credits', label: 'Crédits', icon: 'fa-solid fa-heart', color: '#ff6b6b' },
     ];
+
+    const handleLogin = async () => {
+        setAuthLoading(true);
+        try {
+            await loginWithGoogle();
+            onClose();
+        } catch (err) {
+            if (err.code !== 'auth/popup-closed-by-user') {
+                console.error('Login failed:', err);
+            }
+        }
+        setAuthLoading(false);
+    };
+
+    const handleLogout = async () => {
+        await logout();
+    };
 
     return (
         <div style={{
@@ -27,7 +49,7 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
             <div style={{
                 backgroundColor: '#1a1a1a',
                 borderRadius: '16px',
-                padding: '20px',
+                padding: '15px',
                 width: '90%',
                 maxWidth: '350px',
                 border: '1px solid #333',
@@ -54,23 +76,104 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
 
                 <h2 style={{
                     marginTop: 0,
-                    marginBottom: '20px',
+                    marginBottom: '15px',
                     color: '#FFD700',
                     textAlign: 'center',
-                    fontFamily: '"Metal Mania", cursive', // Or app font
+                    fontFamily: '"Metal Mania", cursive',
                     letterSpacing: '1px'
                 }}>
                     MENU
                 </h2>
 
+                {/* Auth Section */}
                 <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '15px'
+                    marginBottom: '15px',
+                    padding: '12px',
+                    backgroundColor: '#222',
+                    borderRadius: '10px',
+                    border: '1px solid #333',
                 }}>
+                    {user ? (
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                        }}>
+                            <img
+                                src={user.photoURL}
+                                alt=""
+                                referrerPolicy="no-referrer"
+                                style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '50%',
+                                    border: '2px solid #FFD700',
+                                }}
+                            />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{
+                                    color: '#eee',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 600,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                }}>
+                                    {user.displayName}
+                                </div>
+                                <div style={{ color: '#888', fontSize: '0.7rem' }}>
+                                    <i className="fa-solid fa-cloud-check" style={{ color: '#4CAF50', marginRight: '4px' }}></i>
+                                    Sync active
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleLogout}
+                                style={{
+                                    background: 'rgba(255,255,255,0.08)',
+                                    border: '1px solid #444',
+                                    borderRadius: '6px',
+                                    color: '#aaa',
+                                    padding: '5px 10px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.75rem',
+                                }}
+                            >
+                                <i className="fa-solid fa-right-from-bracket"></i>
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleLogin}
+                            disabled={authLoading}
+                            style={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                padding: '10px',
+                                backgroundColor: '#2a2a2a',
+                                border: '1px solid #555',
+                                borderRadius: '8px',
+                                color: '#eee',
+                                cursor: authLoading ? 'wait' : 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: 500,
+                                transition: '0.2s',
+                                opacity: authLoading ? 0.6 : 1,
+                            }}
+                        >
+                            <i className="fa-brands fa-google" style={{ color: '#FFD700' }}></i>
+                            {authLoading ? 'Connexion...' : 'Connexion avec Google'}
+                        </button>
+                    )}
+                </div>
+
+                <div className="profile-menu-grid">
                     {MENU_ITEMS.map(item => (
                         <button
                             key={item.id}
+                            className="profile-menu-btn"
                             onClick={() => {
                                 onClose();
                                 if (item.id === 'share') {
@@ -79,43 +182,26 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
                                     onOpenPanel(item.id);
                                 }
                             }}
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '10px',
-                                padding: '15px',
-                                backgroundColor: '#2a2a2a',
-                                border: '1px solid #444',
-                                borderRadius: '12px',
-                                color: '#eee',
-                                cursor: 'pointer',
-                                transition: '0.2s'
-                            }}
                         >
-                            <div style={{
-                                fontSize: '1.5rem',
-                                color: item.color
-                            }}>
+                            <div style={{ color: item.color }} className="profile-menu-icon">
                                 <i className={item.icon}></i>
                             </div>
-                            <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{item.label}</span>
+                            <span className="profile-menu-label">{item.label}</span>
                         </button>
                     ))}
                 </div>
 
                 <div style={{
                     textAlign: 'center',
-                    marginTop: '20px',
+                    marginTop: '10px',
                     fontSize: '0.8rem',
                     color: '#666'
                 }}>
                     {(() => {
                         const now = new Date();
                         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                        const festivalStart = new Date(2026, 5, 18); // 18 Juin 2026
-                        const festivalEnd = new Date(2026, 5, 21);   // 21 Juin 2026
+                        const festivalStart = new Date(2026, 5, 18);
+                        const festivalEnd = new Date(2026, 5, 21);
 
                         if (today < festivalStart) {
                             const diffTime = festivalStart - today;
