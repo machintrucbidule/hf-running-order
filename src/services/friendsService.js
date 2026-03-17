@@ -62,8 +62,10 @@ export const joinCircleByCode = async (inviteCode, userId, displayName, photoURL
 };
 
 export const leaveCircle = async (circleId, userId) => {
-  await setDoc(doc(db, 'circles', circleId), { members: arrayRemove(userId) }, { merge: true });
+  // Supprimer le sous-document AVANT de se retirer du tableau members
+  // sinon les security rules bloquent car l'user n'est plus membre
   await deleteDoc(doc(db, 'circles', circleId, 'members', userId));
+  await setDoc(doc(db, 'circles', circleId), { members: arrayRemove(userId) }, { merge: true });
 };
 
 export const fetchUserCircles = async (userId) => {

@@ -76,7 +76,18 @@ const FriendsPanel = ({ isOpen, onClose }) => {
     };
 
     const handleCopyCode = (code) => {
-        navigator.clipboard.writeText(code);
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(code);
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = code;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+        }
         setCopiedCode(true);
         setTimeout(() => setCopiedCode(false), 2000);
     };
