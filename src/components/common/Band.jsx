@@ -234,7 +234,7 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
                 height: `${dureeConcert}px`,
                 boxShadow: [
                     isSelected ? 'inset 0 0 0 3px white' : interestColor ? `inset 0 0 0 3px ${interestColor}` : null,
-                    isHighlighted ? '0 0 4px 1px rgba(255, 255, 255, 0.85)' : null,
+                    isHighlighted ? '0 0 4px 1px rgba(0, 0, 0, 0.85)' : null,
                 ].filter(Boolean).join(', ') || undefined,
                 backgroundColor: isHighlighted
                     ? chroma.mix(chroma(sceneColors[SCENE]).luminance(0.6), sceneColors[SCENE], 0.5).hex()
