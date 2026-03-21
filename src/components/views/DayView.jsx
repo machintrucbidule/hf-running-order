@@ -151,8 +151,8 @@ const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth, dayStartM
     );
 };
 
-const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [], onDeleteCustomEvent, onEditCustomEvent }) => {
-    const { state, setState } = useCheckedState();
+const DayView = ({ groups, selectGroup, selectedGroupId, day, bandFilter, customEvents = [], onDeleteCustomEvent, onEditCustomEvent }) => {
+    const { state } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
 
@@ -245,53 +245,53 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
     // Filter Custom Events for this day
     const todaysEvents = customEvents.filter(e => e.day === currentDay);
 
-    // --- DYNAMIC DAY BOUNDS ---
+    // Filtrer les couples : on n'affiche la colonne que si au moins une des deux scènes est visible
+    const visibleCouples = sceneCouples.filter(couple => {
+        const s1 = couple[0];
+        const s2 = couple[1];
+        return isSceneVisible(s1) || (s2 && isSceneVisible(s2));
+    });
+
+    // --- DYNAMIC DAY BOUNDS (100% data-driven) ---
     const getDayBounds = () => {
-        // 1. Base Defaults (based on previous logic)
-        let baseStart = 10 * 60; // 10:00 default
-        let baseEnd = 26 * 60;   // 02:00 default
+        const visibleSceneNames = new Set();
+        visibleCouples.forEach(([s1, s2]) => {
+            if (s1 && isSceneVisible(s1)) visibleSceneNames.add(s1);
+            if (s2 && isSceneVisible(s2)) visibleSceneNames.add(s2);
+        });
 
-        const extendedEnd = state.sideScenes ? 28 * 60 : 26 * 60;
+        let minStart = Infinity;
+        let maxEnd = -Infinity;
 
-        if (currentDay === 'Mercredi') {
-            baseStart = 16 * 60;
-            baseEnd = 25 * 60;
-        } else if (currentDay === 'Jeudi') {
-            baseStart = state.sideScenes ? 11 * 60 : 16 * 60;
-            baseEnd = extendedEnd;
-        } else if (currentDay === 'Dimanche') {
-            baseStart = 10 * 60;
-            baseEnd = 25 * 60;
-        } else {
-            baseStart = 10 * 60;
-            baseEnd = extendedEnd;
-        }
+        groups.forEach(group => {
+            if (!visibleSceneNames.has(group.SCENE)) return;
+            if (typeof group.DEBUT !== 'string' || typeof group.FIN !== 'string') return;
+            const dParts = group.DEBUT.split('h');
+            const fParts = group.FIN.split('h');
+            let dH = +dParts[0], fH = +fParts[0];
+            const dM = +(dParts[1] || 0), fM = +(fParts[1] || 0);
+            if (dH < 6) dH += 24;
+            if (fH < 6) fH += 24;
+            const groupStart = dH * 60 + dM;
+            const groupEnd = fH * 60 + fM;
+            if (groupStart < minStart) minStart = groupStart;
+            if (groupEnd > maxEnd) maxEnd = groupEnd;
+        });
 
-        let minStart = baseStart;
-        let maxEnd = baseEnd;
-
-        // 2. Check Custom Events
         todaysEvents.forEach(event => {
             const [sH, sM] = event.startTime.split(':').map(Number);
             const [eH, eM] = event.endTime.split(':').map(Number);
-
-            // Adjust +24h if needed (consistent with Band/Overlay logic: < 6h is next day)
             let startMins = sH * 60 + sM;
             let endMins = eH * 60 + eM;
-
             if (sH < 6) startMins += 24 * 60;
             if (eH < 6) endMins += 24 * 60;
-            // Also if end is literally smaller than start (e.g. 23:00 - 01:00), end implies next day if not already caught
             if (endMins < startMins) endMins += 24 * 60;
-
             if (startMins < minStart) minStart = startMins;
             if (endMins > maxEnd) maxEnd = endMins;
         });
 
-        // 3. Check Groups (optional safety, theoretically covers official bounds but maybe there are outliers?)
-        // Skip for performance as official bounds usually cover official groups. 
-        // But if a group is added outside standard time, it should expand too? 
-        // Let's rely on standard logic for groups as they are static.
+        if (minStart === Infinity) minStart = 10 * 60;
+        if (maxEnd === -Infinity) maxEnd = 26 * 60;
 
         return { startMin: minStart, endMin: maxEnd };
     };
@@ -299,178 +299,9 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
     const { startMin, endMin } = getDayBounds();
     const dayStartMinutes = startMin;
     const dayEndMinutes = endMin;
-
     const getSceneBandsHeight = () => `${dayEndMinutes - dayStartMinutes}px`;
 
-    const getHours = () => {
-        const hours = [];
-        const startH = Math.floor(dayStartMinutes / 60);
-        const endH = Math.ceil(dayEndMinutes / 60);
-
-        for (let h = startH; h <= endH; h++) {
-            const displayH = h >= 24 ? h - 24 : h;
-            const hourLabel = `${displayH.toString().padStart(2, '0')}:00`;
-            const timeInMinutes = h * 60;
-
-            // Calculate absolute top position based on current view mode
-            let top;
-            if (state.reverse) {
-                // Inverted: Morning at top (0px = dayStartMinutes)
-                top = timeInMinutes - dayStartMinutes;
-            } else {
-                // Normal: Evening at top (0px = dayEndMinutes)
-                top = dayEndMinutes - timeInMinutes;
-            }
-
-            hours.push({ label: hourLabel, top });
-        }
-        return hours;
-    };
-
-    // Vue étendue (6+ colonnes) sur grands écrans
-    const canUseExtendedView = windowWidth >= 1200;
-    const isExtendedView = !state.compact && canUseExtendedView;
-
     if (!groups) return null;
-
-    const hours = getHours();
-
-    const toggleCompact = () => {
-        setState(prev => ({ ...prev, compact: !prev.compact }));
-    };
-
-    // Toolbar (only visible if can use extended view)
-    const renderToolbar = () => {
-        if (!canUseExtendedView) return null;
-        return (
-            <div className="day-view-toolbar" style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                padding: '10px 20px',
-                marginBottom: '10px'
-            }}>
-                <button
-                    className="view-toggle-btn"
-                    onClick={toggleCompact}
-                    style={{
-                        background: 'rgba(50, 50, 50, 0.8)',
-                        border: '1px solid #555',
-                        color: 'white',
-                        padding: '6px 12px',
-                        borderRadius: '4px',
-                        fontSize: '0.9em',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s'
-                    }}
-                >
-                    <i className={`fa-solid ${!state.compact ? 'fa-table-columns' : 'fa-list'}`}></i>
-                    {state.compact ? "Vue Étendue" : "Vue Compacte"}
-                </button>
-            </div>
-        );
-    };
-
-    // MODE ÉTENDU : colonnes individuelles avec heures
-    if (isExtendedView) {
-        // Scènes principales
-        const mainScenes = ["MAINSTAGE 1", "MAINSTAGE 2", "WARZONE", "VALLEY", "TEMPLE", "ALTAR"];
-        // Scènes annexes (ajoutées si sideScenes activé)
-        const sideScenes = state.sideScenes ? ["HELLSTAGE", "PURPLE_HOUSE", "METAL_CORNER"] : [];
-        const allScenes = [...mainScenes, ...sideScenes];
-
-        // 1. Filtrer selon les préférences utilisateur (checkboxes)
-        const enabledScenes = allScenes.filter(isSceneVisible);
-
-        // 2. Filtrer les scènes vides (aucun groupe ce jour-là)
-        // Ceci évite d'afficher des colonnes vides (ex: Mainstages le mercredi)
-        const visibleScenes = enabledScenes.filter(sceneName => {
-            // Pour le mercredi, les scènes principales sont vides, on veut les cacher
-            if (currentDay === 'Mercredi' && mainScenes.includes(sceneName)) return false;
-            // Pour les autres cas, on vérifie s'il y a des groupes
-            return groups.some(g => g.SCENE === sceneName);
-        });
-
-        return (
-            <div className="compact-day extended-view" style={{ position: 'relative' }}>
-                {visibleScenes.map((sceneName, index) => {
-                    const sceneGroups = groups.filter(g => g.SCENE === sceneName);
-                    const config = STAGE_CONFIG[sceneName];
-                    const colorValue = config?.themeColor || '#000';
-
-                    return (
-                        <div
-                            key={index}
-                            className={`scene-column compact-scene-column scene-column-${sceneName.replace(/\s/g, '')}`}
-                            style={{
-                                background: colorValue,
-                                border: 'none'
-                            }}
-                        >
-                            {/* HEADER : image + titre */}
-                            <div className="compact-scene-couple-header" style={{ display: 'block', width: '100%', textAlign: 'center' }}>
-                                <img className="scene-image" src={config?.icon} alt={sceneName} />
-                                <h3>{config?.name}</h3>
-                            </div>
-
-                            {/* ZONE DES GROUPES avec heures */}
-                            <div className="scene-bands with-hours" style={{ height: getSceneBandsHeight() }}>
-                                {/* Tags d'heures */}
-                                {hours.map((hour, i) => (
-                                    <HourTag key={i} hour={hour} />
-                                ))}
-
-                                {/* Groupes */}
-                                {sceneGroups.map(group => (
-                                    <Band
-                                        key={group.id}
-                                        group={group}
-                                        selectGroup={selectGroup}
-                                        selectedGroupId={selectedGroupId}
-                                        onTagClick={handleTagClick}
-                                        dayStartMinutes={dayStartMinutes}
-                                        dayEndMinutes={dayEndMinutes}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    );
-                })}
-
-                {tagMenuState.open && (
-                    <TagMenu
-                        groupId={tagMenuState.groupId}
-                        position={tagMenuState.position}
-                        onClose={closeTagMenu}
-                    />
-                )}
-
-                {/* Custom Events Overlay (Extended Mode) */}
-                {todaysEvents.map(event => (
-                    <CustomEventOverlay
-                        key={event.id}
-                        event={event}
-                        onEdit={onEditCustomEvent}
-                        columnCount={visibleScenes.length}
-                        windowWidth={windowWidth}
-                        dayStartMinutes={dayStartMinutes}
-                        dayEndMinutes={dayEndMinutes}
-                    />
-                ))}
-            </div>
-        );
-    }
-
-    // MODE COMPACT : 3 colonnes avec paires de scènes
-
-    // Filtrer les couples : on n'affiche la colonne que si au moins une des deux scènes est visible
-    const visibleCouples = sceneCouples.filter(couple => {
-        const s1 = couple[0];
-        const s2 = couple[1];
-        return isSceneVisible(s1) || (s2 && isSceneVisible(s2));
-    });
 
     return (
         <div className="compact-day" style={{ position: 'relative', overflowX: 'auto' }}>
@@ -496,7 +327,6 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
 
                 const bgStyle = {
                     background: background,
-                    // minWidth: '300px' // Not needed if CSS handles it
                 };
 
                 const groups1 = groups.filter(g => g.SCENE === scene1);
@@ -522,8 +352,6 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
 
                         {/* BANDS */}
                         <div className="scene-bands" style={{ height: getSceneBandsHeight() }}>
-                            {/* Pas d'heures en mode compact car deux scènes se partagent la colonne */}
-
                             {/* Groupes Scène 1 */}
                             {showS1 && groups1.map(group => (
                                 <Band
@@ -536,6 +364,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                                     onTagClick={handleTagClick}
                                     dayStartMinutes={dayStartMinutes}
                                     dayEndMinutes={dayEndMinutes}
+                                    bandFilter={bandFilter}
                                 />
                             ))}
 
@@ -551,6 +380,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                                     onTagClick={handleTagClick}
                                     dayStartMinutes={dayStartMinutes}
                                     dayEndMinutes={dayEndMinutes}
+                                    bandFilter={bandFilter}
                                 />
                             ))}
                         </div>
@@ -566,7 +396,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                 />
             )}
 
-            {/* Custom Events Overlay (Compact Mode) */}
+            {/* Custom Events Overlay */}
             {todaysEvents.map(event => (
                 <CustomEventOverlay
                     key={event.id}

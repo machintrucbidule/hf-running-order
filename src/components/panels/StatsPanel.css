@@ -89,9 +89,9 @@
         bottom: 0;
         left: 0;
         width: 100%;
-        background: linear-gradient(to top, #50C878 0%, #FFD700 50%, #dc2829 100%);
+        background: linear-gradient(to top, #5DADE2 0%, #F4A261 50%, #E63946 100%);
         transition: height 1.5s cubic-bezier(0.22, 1, 0.36, 1);
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        box-shadow: 0 0 10px rgba(230, 57, 70, 0.5);
     }
 
     /* Container for labels - Overlays the bar but extends right */
@@ -166,7 +166,7 @@
     .stats-count-val {
         font-size: 3rem;
         font-weight: bold;
-        color: #FFD700;
+        color: #E63946;
         line-height: 1;
         margin-right: 10px;
     }
@@ -184,7 +184,7 @@
     }
 
     .stats-rank-name {
-        color: #FFD700;
+        color: #E63946;
         font-family: 'Metal Mania', cursive, sans-serif;
         letter-spacing: 1px;
     }
@@ -201,7 +201,7 @@
         margin-top: 0;
         margin-bottom: 20px;
         font-family: 'Metal Mania', cursive, sans-serif;
-        color: #FFD700;
+        color: #E63946;
         text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
     }
 
@@ -236,7 +236,7 @@
     }
 
     .stats-share-btn:hover {
-        background: #FFD700;
+        background: #E63946;
         color: #000;
         transform: scale(1.1);
     }
@@ -274,12 +274,12 @@
         justify-content: center;
         align-items: center;
         font-size: 2.5rem;
-        border: 2px solid #FFD700;
+        border: 2px solid #E63946;
         margin: 0 auto 5px;
     }
 
     .stats-panel-rank-badge {
-        background: #FFD700;
+        background: #E63946;
         color: #000;
         font-size: 0.7rem;
         font-weight: bold;
@@ -325,7 +325,7 @@
     }
 
     .stats-panel-value {
-        color: #FFD700;
+        color: #E63946;
         font-weight: bold;
         text-transform: uppercase;
     }
@@ -487,7 +487,7 @@
     }
 
     .daily-rank-title {
-        color: #FFD700;
+        color: #E63946;
         font-weight: 700;
         font-size: 0.85rem;
         /* Slightly smaller */
@@ -508,12 +508,12 @@
     }
 
     .stats-panel-progress-bar-fill.medium {
-        background: #50C878;
+        background: #5DADE2;
         /* Green */
     }
 
     .stats-panel-progress-bar-fill.high {
-        background: #FFD700;
+        background: #E63946;
         /* Yellow */
     }
 
@@ -532,11 +532,11 @@
     }
 
     .stats-panel-warning-text.low {
-        color: #50C878;
+        color: #5DADE2;
     }
 
     .stats-panel-warning-text.medium {
-        color: #FFD700;
+        color: #E63946;
     }
 
     .stats-panel-warning-text.high {
@@ -750,13 +750,13 @@
 
     .intensity-badge.medium {
         background: rgba(80, 200, 120, 0.2);
-        color: #50C878;
+        color: #5DADE2;
         border: 1px solid rgba(80, 200, 120, 0.3);
     }
 
     .intensity-badge.high {
         background: rgba(255, 215, 0, 0.2);
-        color: #FFD700;
+        color: #E63946;
         border: 1px solid rgba(255, 215, 0, 0.3);
     }
 
@@ -767,7 +767,7 @@
     }
 
     .daily-rank-title {
-        color: #FFD700;
+        color: #E63946;
         font-weight: 700;
         font-size: 0.95rem;
         text-transform: uppercase;
@@ -806,7 +806,7 @@
 
     .daily-rank-icon {
         font-size: 1.2rem;
-        color: #FFD700;
+        color: #E63946;
         margin-bottom: 2px;
         display: flex;
         gap: 8px;

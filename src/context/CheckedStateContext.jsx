@@ -14,6 +14,24 @@ const getDefaultInterestColors = () => {
     return colors;
 };
 
+// Anciennes couleurs par défaut — migration automatique vers les nouvelles
+const OLD_DEFAULT_COLORS = {
+    must_see: '#FFD700',
+    interested: '#4A90D9',
+    curious: '#50C878',
+};
+
+const migrateInterestColors = (stateData) => {
+    const ic = stateData.interestColors;
+    if (ic &&
+        ic.must_see === OLD_DEFAULT_COLORS.must_see &&
+        ic.interested === OLD_DEFAULT_COLORS.interested &&
+        ic.curious === OLD_DEFAULT_COLORS.curious) {
+        return { ...stateData, interestColors: getDefaultInterestColors() };
+    }
+    return stateData;
+};
+
 const INITIAL_STATE = {
     scenes: {
         mainstage1: true,
@@ -69,7 +87,7 @@ export const CheckedStateProvider = ({ children }) => {
             if (saved) {
                 const parsed = JSON.parse(saved);
                 const migrated = migrateOldData(parsed);
-                return mergeWithInitialState(migrated);
+                return migrateInterestColors(mergeWithInitialState(migrated));
             }
         } catch (e) {
             console.error("Failed to load state", e);
@@ -120,7 +138,7 @@ export const CheckedStateProvider = ({ children }) => {
                     if (remoteModified > localModified) {
                         const remoteMigrated = migrateOldData(result.data.checkedState);
                         skipNextFirestoreWrite.current = true;
-                        setState(mergeWithInitialState(remoteMigrated));
+                        setState(migrateInterestColors(mergeWithInitialState(remoteMigrated)));
                     }
                 }
                 setSyncStatus('synced');

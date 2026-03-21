@@ -116,21 +116,21 @@ export const INTEREST_LEVELS = {
     id: 'must_see',
     label: 'Incontournable',
     stars: 3,
-    defaultColor: '#FFD700', // Or
+    defaultColor: '#E63946', // Rouge vif
     sentiment: 'very_positive',
   },
   interested: {
     id: 'interested',
     label: 'Intéressé',
     stars: 2,
-    defaultColor: '#4A90D9', // Bleu
+    defaultColor: '#F4A261', // Orange doux
     sentiment: 'positive',
   },
   curious: {
     id: 'curious',
     label: 'Curieux',
     stars: 1,
-    defaultColor: '#50C878', // Vert
+    defaultColor: '#5DADE2', // Bleu ciel
     sentiment: 'neutral_positive',
   },
 };

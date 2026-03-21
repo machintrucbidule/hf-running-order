@@ -9,6 +9,7 @@ import { useLineup } from './hooks/useLineup';
 import { fetchUserData, saveUserData } from './services/firestoreSync';
 import HeaderBar from './components/layout/HeaderBar';
 import Navigation from './components/layout/Navigation';
+import FilterBar from './components/layout/FilterBar';
 import DayView from './components/views/DayView';
 import WeeklyView from './components/views/WeeklyView';
 import GroupCard from './components/common/GroupCard';
@@ -37,6 +38,8 @@ function AppContent() {
 
   const [editingEvent, setEditingEvent] = useState(null);
 
+  const [bandFilter, setBandFilter] = useState(() => localStorage.getItem('bandFilter') || 'all');
+
   const [importData, setImportData] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
@@ -56,6 +59,10 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('customEvents', JSON.stringify(customEvents));
   }, [customEvents]);
+
+  useEffect(() => {
+    localStorage.setItem('bandFilter', bandFilter);
+  }, [bandFilter]);
 
   // Initial sync of customEvents/contacts from Firestore
   useEffect(() => {
@@ -310,6 +317,9 @@ function AppContent() {
         </div>
       )}
 
+      {viewMode === 'day' && (
+        <FilterBar activeFilter={bandFilter} onFilterChange={setBandFilter} />
+      )}
       {viewMode === 'day' && <Navigation />}
 
       <main className="content" {...swipeHandlers}>
@@ -321,6 +331,7 @@ function AppContent() {
                 selectGroup={handleGroupSelect}
                 selectedGroupId={selectedGroup?.id}
                 day={state.day}
+                bandFilter={bandFilter}
                 customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}
                 onDeleteCustomEvent={isGuestMode ? () => { } : handleDeleteCustomEvent}
                 onEditCustomEvent={isGuestMode ? () => { } : handleEditCustomEvent}

@@ -3,7 +3,7 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 
 const GroupPopover = ({ group, position, onClose, onShowDetails }) => {
     const popoverRef = useRef(null);
-    const { state, toggleBand, setInterest, setContext, getBandTag } = useCheckedState();
+    const { state, toggleBand, setInterest, setContext, getBandTag, getInterestColor } = useCheckedState();
 
     const isTagged = !!state.taggedBands[group.id];
 
@@ -84,21 +84,21 @@ const GroupPopover = ({ group, position, onClose, onShowDetails }) => {
                     <button
                         className={`popover-action-btn ${getBandTag(group.id)?.interest === 'must_see' ? 'active' : ''}`}
                         onClick={() => { setInterest(group.id, getBandTag(group.id)?.interest === 'must_see' ? null : 'must_see'); onClose(); }}
-                        style={{ '--btn-color': '#50C878' }}
+                        style={{ '--btn-color': getInterestColor('must_see') }}
                     >
                         <i className="fa-solid fa-star"></i> Incontournable
                     </button>
                     <button
                         className={`popover-action-btn ${getBandTag(group.id)?.interest === 'interested' ? 'active' : ''}`}
                         onClick={() => { setInterest(group.id, getBandTag(group.id)?.interest === 'interested' ? null : 'interested'); onClose(); }}
-                        style={{ '--btn-color': '#FFD700' }}
+                        style={{ '--btn-color': getInterestColor('interested') }}
                     >
                         <i className="fa-solid fa-star-half-stroke"></i> Intéressé
                     </button>
                     <button
                         className={`popover-action-btn ${getBandTag(group.id)?.interest === 'curious' ? 'active' : ''}`}
                         onClick={() => { setInterest(group.id, getBandTag(group.id)?.interest === 'curious' ? null : 'curious'); onClose(); }}
-                        style={{ '--btn-color': '#3498db' }}
+                        style={{ '--btn-color': getInterestColor('curious') }}
                     >
                         <i className="fa-regular fa-star"></i> Curieux
                     </button>

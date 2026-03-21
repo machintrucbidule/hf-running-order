@@ -31,7 +31,7 @@ const PersonIcon3 = ({ color }) => (
     </svg>
 );
 
-const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes, dayEndMinutes }) => {
+const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes, dayEndMinutes, bandFilter }) => {
     const { GROUPE, SCENE, DEBUT, FIN, id } = group;
     const { state, getBandTag, getInterestColor, cycleInterest } = useCheckedState();
     const { user } = useAuth();
@@ -80,6 +80,12 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
     const hasInterest = !!bandTag?.interest;
     const hasContext = !!bandTag?.context;
     const isTagged = hasInterest || hasContext;
+
+    // Filter visibility based on bandFilter prop
+    const isFilterVisible = !bandFilter || bandFilter === 'all'
+        || (bandFilter === 'mine' && isTagged)
+        || (bandFilter === 'my_circle' && (isTagged || memberFriendsTags.length > 0))
+        || (bandFilter === 'all_circles' && (isTagged || memberFriendsTags.length > 0 || followedFriendsTags.length > 0));
 
     // Parsing des heures
     if (typeof DEBUT !== 'string' || typeof FIN !== 'string') return null;
@@ -225,9 +231,9 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
                 position: 'absolute',
                 top: getTop(),
                 height: `${dureeConcert}px`,
-                border: `0px solid ${sceneColors[SCENE]}`,
+                boxShadow: isSelected ? 'inset 0 0 0 3px white' : interestColor ? `inset 0 0 0 3px ${interestColor}` : undefined,
                 backgroundColor: chroma(sceneColors[SCENE]).luminance(0.6).hex(),
-                display: (!state.scenes[SCENE.toLowerCase().replace(' ', '')]) ? 'none' : 'flex',
+                display: (!state.scenes[SCENE.toLowerCase().replace(' ', '')] || !isFilterVisible) ? 'none' : 'flex',
             }}
             onClick={handleClick}
             onContextMenu={handleRightClick}

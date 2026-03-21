@@ -5,22 +5,21 @@ const WelcomeModal = () => {
     const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
-        // En "faisant la même chose", on l'affiche au montage.
-        // On pourrait ajouter un check localStorage ici pour ne plus l'afficher si déjà vu,
-        // mais pour l'instant on suit strictement la consigne.
-        setIsOpen(true);
+        if (!localStorage.getItem('welcomeModalSeen')) {
+            setIsOpen(true);
+        }
     }, []);
 
     if (!isOpen) return null;
 
     return (
-        <div className="welcome-popup-overlay" onClick={() => setIsOpen(false)}>
+        <div className="welcome-popup-overlay" onClick={() => { localStorage.setItem('welcomeModalSeen', '1'); setIsOpen(false); }}>
             <div className="welcome-popup-content" onClick={(e) => e.stopPropagation()}>
                 <div className="welcome-popup-header">
                     <h2>⚠️ Running Order Prévisionnel</h2>
                     <button
                         className="welcome-popup-close"
-                        onClick={() => setIsOpen(false)}
+                        onClick={() => { localStorage.setItem('welcomeModalSeen', '1'); setIsOpen(false); }}
                     >
                         ×
                     </button>
@@ -40,7 +39,10 @@ const WelcomeModal = () => {
                 <div className="welcome-popup-actions">
                     <button
                         className="welcome-popup-button"
-                        onClick={() => setIsOpen(false)}
+                        onClick={() => {
+                            localStorage.setItem('welcomeModalSeen', '1');
+                            setIsOpen(false);
+                        }}
                     >
                         J'ai compris
                     </button>
