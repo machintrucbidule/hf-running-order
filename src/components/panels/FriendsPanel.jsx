@@ -481,66 +481,135 @@ const FriendsPanel = ({ isOpen, onClose }) => {
                     <div style={{ flex: 1, overflowY: 'auto', paddingRight: '5px' }}>
                         {viewingMembers.length === 0 ? (
                             <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>Chargement des membres...</p>
-                        ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                {viewingMembers.map(member => {
-                                    const isMe = member.id === user.uid;
-                                    const bandCount = Object.keys(member.taggedBands || {}).length;
-                                    return (
-                                        <div key={member.id} style={cardStyle}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                                                {member.photoURL ? (
-                                                    <img
-                                                        src={member.photoURL}
-                                                        alt=""
-                                                        referrerPolicy="no-referrer"
-                                                        style={{
-                                                            width: '28px', height: '28px',
-                                                            borderRadius: '50%',
-                                                            border: isMe ? '2px solid #FFD700' : '2px solid #444',
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div style={{
-                                                        width: '28px', height: '28px',
-                                                        borderRadius: '50%',
-                                                        backgroundColor: '#444',
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        fontSize: '0.7rem', color: '#aaa',
-                                                    }}>
-                                                        {(member.displayName || '?')[0].toUpperCase()}
-                                                    </div>
-                                                )}
-                                                <div style={{ minWidth: 0 }}>
-                                                    <div style={{
-                                                        fontWeight: isMe ? 'bold' : 'normal',
-                                                        color: isMe ? '#FFD700' : '#eee',
-                                                        fontSize: '0.85rem',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap',
-                                                    }}>
-                                                        {member.displayName || 'Anonyme'} {isMe && '(moi)'}
-                                                    </div>
-                                                    <div style={{ fontSize: '0.7rem', color: '#888' }}>
-                                                        {bandCount} band{bandCount > 1 ? 's' : ''} taggué{bandCount > 1 ? 's' : ''}
-                                                    </div>
-                                                </div>
+                        ) : (() => {
+                            const realMembers = viewingMembers.filter(m => m.isMember === true);
+                            const followers = viewingMembers.filter(m => m.isMember !== true);
+                            return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    {/* Section Membres */}
+                                    {realMembers.length > 0 && (
+                                        <>
+                                            <div style={{ fontSize: '0.7rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px', marginTop: '4px' }}>
+                                                <i className="fa-solid fa-star" style={{ color: '#FFD700', marginRight: '5px', fontSize: '0.6rem' }}></i>
+                                                Membres ({realMembers.length})
                                             </div>
-                                            {!isMe && (
-                                                <button
-                                                    onClick={() => handleViewMemberRo(member)}
-                                                    title="Voir son RO"
-                                                    style={actionBtnStyle('#FFD700')}
-                                                >
-                                                    <i className="fa-solid fa-eye" style={{ color: '#000', fontSize: '0.8rem' }}></i>
-                                                </button>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+                                            {realMembers.map(member => {
+                                                const isMe = member.id === user.uid;
+                                                const bandCount = Object.keys(member.taggedBands || {}).length;
+                                                return (
+                                                    <div key={member.id} style={cardStyle}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                                                            {member.photoURL ? (
+                                                                <img
+                                                                    src={member.photoURL}
+                                                                    alt=""
+                                                                    referrerPolicy="no-referrer"
+                                                                    style={{
+                                                                        width: '28px', height: '28px',
+                                                                        borderRadius: '50%',
+                                                                        border: isMe ? '2px solid #FFD700' : '2px solid #444',
+                                                                    }}
+                                                                />
+                                                            ) : (
+                                                                <div style={{
+                                                                    width: '28px', height: '28px',
+                                                                    borderRadius: '50%',
+                                                                    backgroundColor: '#444',
+                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                    fontSize: '0.7rem', color: '#aaa',
+                                                                }}>
+                                                                    {(member.displayName || '?')[0].toUpperCase()}
+                                                                </div>
+                                                            )}
+                                                            <div style={{ minWidth: 0 }}>
+                                                                <div style={{
+                                                                    fontWeight: isMe ? 'bold' : 'normal',
+                                                                    color: isMe ? '#FFD700' : '#eee',
+                                                                    fontSize: '0.85rem',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap',
+                                                                }}>
+                                                                    {member.displayName || 'Anonyme'} {isMe && '(moi)'}
+                                                                </div>
+                                                                <div style={{ fontSize: '0.7rem', color: '#888' }}>
+                                                                    {bandCount} band{bandCount > 1 ? 's' : ''} taggué{bandCount > 1 ? 's' : ''}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {!isMe && (
+                                                            <button
+                                                                onClick={() => handleViewMemberRo(member)}
+                                                                title="Voir son RO"
+                                                                style={actionBtnStyle('#FFD700')}
+                                                            >
+                                                                <i className="fa-solid fa-eye" style={{ color: '#000', fontSize: '0.8rem' }}></i>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </>
+                                    )}
+
+                                    {/* Section Suiveurs */}
+                                    {followers.length > 0 && (
+                                        <>
+                                            <div style={{ fontSize: '0.7rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px', marginTop: '10px' }}>
+                                                <i className="fa-solid fa-eye" style={{ color: '#666', marginRight: '5px', fontSize: '0.6rem' }}></i>
+                                                Suiveurs ({followers.length})
+                                            </div>
+                                            {followers.map(member => {
+                                                const isMe = member.id === user.uid;
+                                                return (
+                                                    <div key={member.id} style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        padding: '6px 12px',
+                                                        backgroundColor: '#222',
+                                                        borderRadius: '6px',
+                                                    }}>
+                                                        {member.photoURL ? (
+                                                            <img
+                                                                src={member.photoURL}
+                                                                alt=""
+                                                                referrerPolicy="no-referrer"
+                                                                style={{
+                                                                    width: '22px', height: '22px',
+                                                                    borderRadius: '50%',
+                                                                    border: isMe ? '2px solid #FFD700' : '1px solid #444',
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div style={{
+                                                                width: '22px', height: '22px',
+                                                                borderRadius: '50%',
+                                                                backgroundColor: '#3a3a3a',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                fontSize: '0.6rem', color: '#888',
+                                                            }}>
+                                                                {(member.displayName || '?')[0].toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                        <span style={{
+                                                            color: isMe ? '#FFD700' : '#999',
+                                                            fontSize: '0.8rem',
+                                                            fontWeight: isMe ? 'bold' : 'normal',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                        }}>
+                                                            {member.displayName || 'Anonyme'} {isMe && '(moi)'}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     <button onClick={handleBack} style={{ ...secondaryBtnStyle, marginTop: '15px', width: '100%' }}>

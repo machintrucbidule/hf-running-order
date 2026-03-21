@@ -42,8 +42,8 @@ export const FriendsProvider = ({ children }) => {
   const [loadingCircles, setLoadingCircles] = useState(false);
   const unsubMapRef = useRef(new Map()); // circleId -> unsubscribe fn
   const bandsSyncTimeout = useRef(null);
-  const lastCleanedMemberRef = useRef(localStorage.getItem(CACHE_KEY_MEMBER));
-  const hasResolvedMemberRef = useRef(false);
+  const lastCleanedMemberRef = useRef(null);
+  const hasResolvedMemberRef = useRef(!!localStorage.getItem(CACHE_KEY_MEMBER));
 
   // Persist memberCircleId to localStorage
   const setMemberCircleId = (id) => {
@@ -133,14 +133,19 @@ export const FriendsProvider = ({ children }) => {
           });
 
           // Validate memberCircleId from localStorage, fallback to first circle
+          // Note: prev can be null because the !user cleanup clears the state
+          // (but intentionally keeps localStorage), so we read localStorage directly.
           setMemberCircleIdState(prev => {
-            const valid = prev && c.some(circle => circle.id === prev);
+            const saved = prev || localStorage.getItem(CACHE_KEY_MEMBER);
+            const valid = saved && c.some(circle => circle.id === saved);
             if (!valid) {
               const newId = c[0].id;
               localStorage.setItem(CACHE_KEY_MEMBER, newId);
+              hasResolvedMemberRef.current = true;
               return newId;
             }
-            return prev;
+            hasResolvedMemberRef.current = true;
+            return saved;
           });
         } else {
           setVisibleCircleIds(new Set());

@@ -170,6 +170,7 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
     const sceneClass = `band-${SCENE.replace(/\s/g, '')}`;
 
     const interestColor = hasInterest ? getInterestColor(bandTag.interest) : null;
+    const isHighlighted = isTagged || memberFriendsTags.length > 0 || followedFriendsTags.length > 0;
 
     const getContextDisplay = () => {
         if (!bandTag?.context) return null;
@@ -231,8 +232,14 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
                 position: 'absolute',
                 top: getTop(),
                 height: `${dureeConcert}px`,
-                boxShadow: isSelected ? 'inset 0 0 0 3px white' : interestColor ? `inset 0 0 0 3px ${interestColor}` : undefined,
-                backgroundColor: chroma(sceneColors[SCENE]).luminance(0.6).hex(),
+                boxShadow: [
+                    isSelected ? 'inset 0 0 0 3px white' : interestColor ? `inset 0 0 0 3px ${interestColor}` : null,
+                    isHighlighted ? '0 0 4px 1px rgba(255, 255, 255, 0.85)' : null,
+                ].filter(Boolean).join(', ') || undefined,
+                backgroundColor: isHighlighted
+                    ? chroma.mix(chroma(sceneColors[SCENE]).luminance(0.6), sceneColors[SCENE], 0.5).hex()
+                    : chroma(sceneColors[SCENE]).luminance(0.6).hex(),
+                zIndex: isHighlighted ? 1 : undefined,
                 display: (!state.scenes[SCENE.toLowerCase().replace(' ', '')] || !isFilterVisible) ? 'none' : 'flex',
             }}
             onClick={handleClick}
