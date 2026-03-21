@@ -903,25 +903,42 @@
 
     /* === CIRCLE STATS: TOP BANDS === */
     .stats-circle-top-bands {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+        display: grid;
+        grid-template-columns: auto auto 1fr;
+        gap: 4px 0;
+        align-items: stretch;
         margin-bottom: 20px;
     }
 
+    .stats-circle-top-bands > :not(.stats-circle-band-row) {
+        grid-column: 1 / -1;
+    }
+
+    .stats-panel-day-intensity .stats-circle-top-bands {
+        margin-bottom: 0;
+    }
+
     .stats-circle-band-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px 12px;
+        display: contents;
+    }
+
+    .stats-circle-band-row > * {
         background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 6px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        cursor: pointer;
     }
 
     .stats-circle-band-info {
-        flex: 1;
         min-width: 0;
+        padding-left: 12px;
+        border-left: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 6px 0 0 6px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .stats-circle-band-name {
@@ -940,11 +957,52 @@
         text-transform: uppercase;
     }
 
+    .stats-circle-band-count {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        color: #888;
+        font-size: 0.6rem;
+        font-weight: 600;
+        padding: 4px 8px;
+    }
+
+    .stats-circle-band-count span:last-child {
+        font-size: 0.75rem;
+        color: #bbb;
+    }
+
     .stats-circle-band-avatars {
         display: flex;
         gap: 0;
-        flex-shrink: 0;
-        margin-left: 8px;
+        align-items: center;
+        overflow-x: auto;
+        min-width: 0;
+        padding-right: 12px;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 0 6px 6px 0;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.15) transparent;
+    }
+
+    .stats-circle-band-avatars::before {
+        content: '';
+        flex: 1;
+    }
+
+    .stats-circle-band-avatars::-webkit-scrollbar {
+        height: 3px;
+    }
+
+    .stats-circle-band-avatars::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .stats-circle-band-avatars::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.15);
+        border-radius: 3px;
     }
 
     .stats-circle-avatar-wrapper {
@@ -994,7 +1052,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        min-width: 110px;
+        width: 140px;
         flex-shrink: 0;
     }
 

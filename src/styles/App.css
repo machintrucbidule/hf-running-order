@@ -367,6 +367,11 @@ nav button:hover {
 }
 
 /* === GROUP CARD === */
+.group-card-container {
+  position: relative;
+  z-index: 2500;
+}
+
 .group-card {
   position: fixed;
   z-index: 1000;

@@ -11,7 +11,7 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 import { useAuth } from '../../context/AuthContext';
 import StatsPanel from '../panels/StatsPanel';
 
-const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact, isGuestMode, guestName, onExitGuestMode, onClearCustomEvents }) => {
+const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact, isGuestMode, guestName, onExitGuestMode, onClearCustomEvents, onGroupClick }) => {
     const { userState, syncStatus } = useCheckedState();
     const { user } = useAuth();
     const [playlistOpen, setPlaylistOpen] = useState(false);
@@ -219,6 +219,7 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                 <StatsPanel
                     onClose={() => setStatsOpen(false)}
                     customEvents={customEvents}
+                    onGroupClick={onGroupClick}
                 />
             )}
 

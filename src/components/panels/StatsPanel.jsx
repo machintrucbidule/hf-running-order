@@ -14,7 +14,7 @@ const TABS = [
     { id: 'all_circles', label: 'Mes cercles', icon: 'fa-solid fa-users' },
 ];
 
-const StatsPanel = ({ onClose, customEvents = [] }) => {
+const StatsPanel = ({ onClose, customEvents = [], onGroupClick }) => {
     const { state, userState, getInterestColor } = useCheckedState();
     const { user } = useAuth();
     const { circleMembersMap, memberCircleId, visibleCircleIds, circles } = useFriends();
@@ -104,27 +104,35 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
         });
         myBandIds.forEach(id => allCircleBandIds.add(id));
 
-        // Band counts (how many people tagged each band, including me)
+        // Band counts + interest scores (how many people tagged each band, including me)
         const bandCounts = {};
+        const bandInterestScores = {};
+        const interestPriority = { must_see: 3, interested: 2, curious: 1 };
         myBandIds.forEach(id => {
             bandCounts[id] = (bandCounts[id] || 0) + 1;
+            const interest = effectiveState.taggedBands[id]?.interest;
+            bandInterestScores[id] = (bandInterestScores[id] || 0) + (interestPriority[interest] || 0);
         });
         members.forEach(m => {
-            Object.keys(m.taggedBands || {}).forEach(id => {
+            Object.entries(m.taggedBands || {}).forEach(([id, v]) => {
                 bandCounts[id] = (bandCounts[id] || 0) + 1;
+                bandInterestScores[id] = (bandInterestScores[id] || 0) + (interestPriority[v.interest] || 0);
             });
         });
 
         // Common bands (2+ people)
         const commonBands = Object.values(bandCounts).filter(c => c >= 2).length;
 
-        // Top bands
+        // Top bands — sorted by count desc, then interest score desc
         const groupMap = {};
         groups.forEach(g => { groupMap[g.id] = g; });
 
         const topBands = Object.entries(bandCounts)
             .filter(([, count]) => count >= 2)
-            .sort(([, a], [, b]) => b - a)
+            .sort(([idA, countA], [idB, countB]) => {
+                if (countB !== countA) return countB - countA;
+                return (bandInterestScores[idB] || 0) - (bandInterestScores[idA] || 0);
+            })
             .slice(0, 15)
             .map(([bandId, count]) => {
                 const group = groupMap[bandId];
@@ -181,7 +189,6 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
             if (v.interest) mergedTaggedBands[id] = { interest: v.interest };
         });
         // Add members' bands (keep highest interest)
-        const interestPriority = { must_see: 3, interested: 2, curious: 1 };
         members.forEach(m => {
             Object.entries(m.taggedBands || {}).forEach(([id, v]) => {
                 if (!v.interest) return;
@@ -545,7 +552,7 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                                                                 {(member.displayName || '?')[0].toUpperCase()}
                                                             </div>
                                                         )}
-                                                        <span className="stats-circle-compat-name">{member.displayName}</span>
+                                                        <span className="stats-circle-compat-name">{(member.displayName || '?').replace(/\s*\(.*?\)\s*/g, '').trim()}</span>
                                                     </div>
                                                     <div className="stats-circle-compat-bar-container">
                                                         <div className="stats-circle-compat-bar">
@@ -555,45 +562,6 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                                                             ></div>
                                                         </div>
                                                         <span className="stats-circle-compat-pct">{member.percentage}%</span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-
-                                {/* Top bands */}
-                                {circleStats.topBands.length > 0 && (
-                                    <>
-                                        <div className="stats-panel-section-title">TOP GROUPES DU CERCLE</div>
-                                        <div className="stats-circle-top-bands">
-                                            {circleStats.topBands.map(band => (
-                                                <div key={band.bandId} className="stats-circle-band-row">
-                                                    <div className="stats-circle-band-info">
-                                                        <span className="stats-circle-band-name">{band.name}</span>
-                                                        <span className="stats-circle-band-meta">{band.scene} — {band.day}</span>
-                                                    </div>
-                                                    <div className="stats-circle-band-avatars">
-                                                        {band.taggedBy.map(person => (
-                                                            <div key={person.id} className="stats-circle-avatar-wrapper" title={person.displayName}>
-                                                                {person.photoURL ? (
-                                                                    <img
-                                                                        src={person.photoURL}
-                                                                        alt=""
-                                                                        referrerPolicy="no-referrer"
-                                                                        className="stats-circle-avatar"
-                                                                        style={{ borderColor: getInterestColor(person.interest) || '#888' }}
-                                                                    />
-                                                                ) : (
-                                                                    <div
-                                                                        className="stats-circle-avatar-fallback"
-                                                                        style={{ borderColor: getInterestColor(person.interest) || '#888' }}
-                                                                    >
-                                                                        {(person.displayName || '?')[0].toUpperCase()}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        ))}
                                                     </div>
                                                 </div>
                                             ))}
@@ -636,6 +604,11 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                                                     }
 
                                                     const isExpanded = expandedDays[day];
+
+                                                    // Top 5 bands in common for this day
+                                                    const dayTopBands = circleStats.topBands
+                                                        .filter(b => b.day === day)
+                                                        .slice(0, 5);
 
                                                     return (
                                                         <div key={day} className="stats-panel-day-intensity">
@@ -721,7 +694,7 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                                                                     })}
                                                             </div>
 
-                                                            <div className="daily-rank-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '10px', marginBottom: '10px' }}>
+                                                            <div className="daily-rank-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '10px', marginBottom: dayTopBands.length > 0 ? '6px' : '0' }}>
                                                                 <div className="daily-rank-icon">
                                                                     <i className="fa-solid fa-medal"></i>
                                                                 </div>
@@ -729,9 +702,103 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                                                                     {data.persona?.title || "Simple Festivalier"}
                                                                 </div>
                                                             </div>
+
+                                                            {dayTopBands.length > 0 && (
+                                                                <div className="stats-circle-top-bands" style={{ marginTop: '4px' }}>
+                                                                    <div style={{ fontSize: '0.65rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Top groupes en commun</div>
+                                                                    {dayTopBands.map(band => {
+                                                                        const handleBandClick = (e) => {
+                                                                            const group = groups.find(g => String(g.id) === String(band.bandId));
+                                                                            if (group && onGroupClick) onGroupClick(group, e);
+                                                                        };
+                                                                        return (
+                                                                        <div key={band.bandId} className="stats-circle-band-row">
+                                                                            <div className="stats-circle-band-info" onClick={handleBandClick}>
+                                                                                <span className="stats-circle-band-name">{band.name}</span>
+                                                                                <span className="stats-circle-band-meta">{band.scene}</span>
+                                                                            </div>
+                                                                            <div className="stats-circle-band-count" onClick={handleBandClick}>
+                                                                                <span>×</span>
+                                                                                <span>{band.count}</span>
+                                                                            </div>
+                                                                            <div className="stats-circle-band-avatars" onClick={handleBandClick}>
+                                                                                {band.taggedBy.map(person => (
+                                                                                    <div key={person.id} className="stats-circle-avatar-wrapper" title={person.displayName}>
+                                                                                        {person.photoURL ? (
+                                                                                            <img
+                                                                                                src={person.photoURL}
+                                                                                                alt=""
+                                                                                                referrerPolicy="no-referrer"
+                                                                                                className="stats-circle-avatar"
+                                                                                                style={{ borderColor: getInterestColor(person.interest) || '#888' }}
+                                                                                            />
+                                                                                        ) : (
+                                                                                            <div
+                                                                                                className="stats-circle-avatar-fallback"
+                                                                                                style={{ borderColor: getInterestColor(person.interest) || '#888' }}
+                                                                                            >
+                                                                                                {(person.displayName || '?')[0].toUpperCase()}
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    );})}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Top bands */}
+                                {circleStats.topBands.length > 0 && (
+                                    <>
+                                        <div className="stats-panel-section-title" style={{ marginTop: '10px' }}>TOP GROUPES DU CERCLE</div>
+                                        <div className="stats-circle-top-bands">
+                                            {circleStats.topBands.map(band => {
+                                                const handleBandClick = (e) => {
+                                                    const group = groups.find(g => String(g.id) === String(band.bandId));
+                                                    if (group && onGroupClick) onGroupClick(group, e);
+                                                };
+                                                return (
+                                                <div key={band.bandId} className="stats-circle-band-row">
+                                                    <div className="stats-circle-band-info" onClick={handleBandClick}>
+                                                        <span className="stats-circle-band-name">{band.name}</span>
+                                                        <span className="stats-circle-band-meta">{band.scene} — {band.day}</span>
+                                                    </div>
+                                                    <div className="stats-circle-band-count" onClick={handleBandClick}>
+                                                        <span>×</span>
+                                                        <span>{band.count}</span>
+                                                    </div>
+                                                    <div className="stats-circle-band-avatars" onClick={handleBandClick}>
+                                                        {band.taggedBy.map(person => (
+                                                            <div key={person.id} className="stats-circle-avatar-wrapper" title={person.displayName}>
+                                                                {person.photoURL ? (
+                                                                    <img
+                                                                        src={person.photoURL}
+                                                                        alt=""
+                                                                        referrerPolicy="no-referrer"
+                                                                        className="stats-circle-avatar"
+                                                                        style={{ borderColor: getInterestColor(person.interest) || '#888' }}
+                                                                    />
+                                                                ) : (
+                                                                    <div
+                                                                        className="stats-circle-avatar-fallback"
+                                                                        style={{ borderColor: getInterestColor(person.interest) || '#888' }}
+                                                                    >
+                                                                        {(person.displayName || '?')[0].toUpperCase()}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                );
+                                            })}
                                         </div>
                                     </>
                                 )}

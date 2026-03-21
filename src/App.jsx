@@ -298,6 +298,7 @@ function AppContent() {
         guestName={isGuestMode ? guestRo.username : null}
         onExitGuestMode={() => setGuestRo(null)}
         onClearCustomEvents={handleClearCustomEvents}
+        onGroupClick={handleGroupSelect}
       />
 
       {isGuestMode && (
