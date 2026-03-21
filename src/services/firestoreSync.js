@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 
 let writeTimeout = null;
@@ -18,10 +18,10 @@ export const saveUserData = (userId, data) => {
   if (writeTimeout) clearTimeout(writeTimeout);
   writeTimeout = setTimeout(async () => {
     try {
-      await setDoc(getUserDocRef(userId), {
+      await updateDoc(getUserDocRef(userId), {
         ...data,
         lastModified: serverTimestamp(),
-      }, { merge: true });
+      });
     } catch (err) {
       console.error('Firestore write failed:', err);
     }
@@ -34,7 +34,7 @@ export const saveUserDataImmediate = async (userId, data) => {
     await setDoc(getUserDocRef(userId), {
       ...data,
       lastModified: serverTimestamp(),
-    }, { merge: true });
+    });
   } catch (err) {
     console.error('Firestore immediate write failed:', err);
   }

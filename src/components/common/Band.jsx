@@ -1,27 +1,79 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useAuth } from '../../context/AuthContext';
 import { useFriends } from '../../context/FriendsContext';
-import { INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
+import { INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS } from '../../constants';
+
+// SVG icons for followed circle indicators (1, 2, 3 people)
+const PersonIcon1 = ({ color }) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill={color}>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M12 14c-6 0-8 3-8 5v1h16v-1c0-2-2-5-8-5z" />
+    </svg>
+);
+const PersonIcon2 = ({ color }) => (
+    <svg width="18" height="14" viewBox="0 0 32 24" fill={color}>
+        <circle cx="10" cy="8" r="3.5" />
+        <path d="M10 13c-5 0-7 2.5-7 4v1h14v-1c0-1.5-2-4-7-4z" />
+        <circle cx="22" cy="8" r="3.5" />
+        <path d="M22 13c-5 0-7 2.5-7 4v1h14v-1c0-1.5-2-4-7-4z" />
+    </svg>
+);
+const PersonIcon3 = ({ color }) => (
+    <svg width="22" height="14" viewBox="0 0 40 24" fill={color}>
+        <circle cx="8" cy="8" r="3" />
+        <path d="M8 13c-4.5 0-6 2.5-6 4v1h12v-1c0-1.5-1.5-4-6-4z" />
+        <circle cx="20" cy="8" r="3" />
+        <path d="M20 13c-4.5 0-6 2.5-6 4v1h12v-1c0-1.5-1.5-4-6-4z" />
+        <circle cx="32" cy="8" r="3" />
+        <path d="M32 13c-4.5 0-6 2.5-6 4v1h12v-1c0-1.5-1.5-4-6-4z" />
+    </svg>
+);
 
 const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes, dayEndMinutes }) => {
     const { GROUPE, SCENE, DEBUT, FIN, id } = group;
     const { state, getBandTag, getInterestColor, cycleInterest } = useCheckedState();
     const { user } = useAuth();
-    const { activeCircleId, circleMembers } = useFriends();
+    const { visibleCircleIds, allVisibleMembers, memberCircleId } = useFriends();
 
-    // Friend indicators from active circle
-    const friendsTags = useMemo(() => {
-        if (!activeCircleId || !circleMembers.length || !user) return [];
-        return circleMembers
-            .filter(m => m.id !== user.uid)
-            .filter(m => m.taggedBands?.[id]?.interest)
-            .map(m => ({
+    // Refs for auto-scroll overflow detection
+    const photosContainerRef = useRef(null);
+    const photosContentRef = useRef(null);
+    const [photosOverflow, setPhotosOverflow] = useState(false);
+    const [scrollOffset, setScrollOffset] = useState(0);
+
+    // Friend indicators split: member circle (left zone) vs followed circles (top right)
+    const { memberFriendsTags, followedFriendsTags } = useMemo(() => {
+        if (visibleCircleIds.size === 0 || !allVisibleMembers.length || !user) {
+            return { memberFriendsTags: [], followedFriendsTags: [] };
+        }
+        const member = [];
+        const followed = [];
+        for (const m of allVisibleMembers) {
+            if (m.id === user.uid) continue;
+            if (!m.taggedBands?.[id]?.interest) continue;
+            const tag = {
                 name: m.displayName || 'Anonyme',
+                photoURL: m.photoURL || '',
                 interest: m.taggedBands[id].interest,
-            }));
-    }, [activeCircleId, circleMembers, id, user]);
+            };
+            if (memberCircleId && m.memberOfCircle === memberCircleId) {
+                member.push(tag);
+            } else {
+                followed.push(tag);
+            }
+        }
+        return { memberFriendsTags: member, followedFriendsTags: followed };
+    }, [visibleCircleIds, allVisibleMembers, id, user, memberCircleId]);
+
+    // Highest interest level among followed circle friends
+    const followedHighestInterest = useMemo(() => {
+        if (followedFriendsTags.length === 0) return null;
+        return INTEREST_ORDER.find(level =>
+            followedFriendsTags.some(ft => ft.interest === level)
+        ) || null;
+    }, [followedFriendsTags]);
 
     const isSelected = selectedGroupId === id;
     const bandTag = getBandTag(id);
@@ -47,8 +99,8 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
     const debutMinutes = dH * 60 + (+debut[1]);
     const finMinutes = fH * 60 + (+fin[1]);
     const duree = finMinutes - debutMinutes;
-
     const dureeConcert = duree;
+    const bandHeight = dureeConcert;
 
     // Couleurs des scènes (principales + annexes)
     const sceneColors = {
@@ -58,26 +110,17 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
         "VALLEY": '#ce7c19',
         "ALTAR": '#dc2829',
         "TEMPLE": '#93a7b0',
-        // Scènes annexes
         "HELLSTAGE": '#239c60',
         "PURPLE_HOUSE": '#9500c6',
         "METAL_CORNER": '#9f9c78'
     };
 
-    // Calcul du top : positionnement vertical basé sur l'heure
-    // Référence : 1px = 1 minute, 0px = heure de fin de journée
-    // - Mercredi: fin à 01h (25h = 1500 min depuis minuit veille)
-    // - Jeudi: fin à 02h (26h = 1560 min depuis minuit veille)
-    // - Vendredi/Samedi: fin à 02h (26h = 1560 min)
-    // - Dimanche: fin à 01h (25h = 1500 min)
     const getTop = () => {
-        // Ajuster les heures APRÈS MINUIT (+24h) - seulement pour 00h-06h
         let adjustedFin = finMinutes;
         let adjustedDebut = debutMinutes;
-        if (finMinutes < 6 * 60) adjustedFin += 24 * 60;  // 00:00-05:59 → +24h
-        if (debutMinutes < 6 * 60) adjustedDebut += 24 * 60;  // 00:00-05:59 → +24h
+        if (finMinutes < 6 * 60) adjustedFin += 24 * 60;
+        if (debutMinutes < 6 * 60) adjustedDebut += 24 * 60;
 
-        // Utilisation des bornes dynamiques si fournies (nouvelle logique)
         if (dayStartMinutes !== undefined && dayEndMinutes !== undefined) {
             if (state.reverse) {
                 return `${adjustedDebut - dayStartMinutes}px`;
@@ -86,53 +129,41 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
             }
         }
 
-        // --- ANCIENNE LOGIQUE (Fallback) ---
         const day = group.DAY;
         let endOfDayMinutes;
         let startOfDayMinutes;
 
-        // Scènes annexes : elles peuvent commencer plus tôt que les scènes principales
         const isSideStage = ['HELLSTAGE', 'PURPLE_HOUSE', 'METAL_CORNER'].includes(SCENE);
-        // Si sideScenes est activé, la journée s'étend jusqu'à 04h00 (28h) pour Metal Corner
         const extendedEnd = state.sideScenes ? 28 * 60 : 26 * 60;
 
         if (day === 'Mercredi') {
-            endOfDayMinutes = 25 * 60; // 01h00 = 25h
-            startOfDayMinutes = 16 * 60; // 16h00
+            endOfDayMinutes = 25 * 60;
+            startOfDayMinutes = 16 * 60;
         } else if (day === 'Jeudi') {
-            endOfDayMinutes = extendedEnd; // 02h00 ou 04h00
-            // Si sideScenes est activé, la grille commence à 11h pour TOUT LE MONDE
+            endOfDayMinutes = extendedEnd;
             if (state.sideScenes) {
                 startOfDayMinutes = 11 * 60;
             } else {
                 startOfDayMinutes = 16 * 60;
             }
         } else if (day === 'Dimanche') {
-            endOfDayMinutes = 25 * 60; // 01h00 = 25h
-            startOfDayMinutes = 10 * 60; // 10h00
+            endOfDayMinutes = 25 * 60;
+            startOfDayMinutes = 10 * 60;
         } else {
-            // Vendredi/Samedi
-            endOfDayMinutes = extendedEnd; // 02h00 ou 04h00
-            startOfDayMinutes = 10 * 60; // 10h00 (même pour side stages)
+            endOfDayMinutes = extendedEnd;
+            startOfDayMinutes = 10 * 60;
         }
 
         if (state.reverse) {
-            // Mode inversé: 10h en haut, 02h en bas
             return `${adjustedDebut - startOfDayMinutes}px`;
         } else {
-            // Mode normal: 02h en haut, 10h en bas
             return `${endOfDayMinutes - adjustedFin}px`;
         }
     };
 
-    // Classe CSS pour la couleur de fond
     const sceneClass = `band-${SCENE.replace(/\s/g, '')}`;
 
-    // Couleur de l'étoile d'intérêt
-    const getInterestColor_ = () => {
-        if (!bandTag?.interest) return null;
-        return getInterestColor(bandTag.interest);
-    };
+    const interestColor = hasInterest ? getInterestColor(bandTag.interest) : null;
 
     const getContextDisplay = () => {
         if (!bandTag?.context) return null;
@@ -140,8 +171,6 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
         if (!ctx) return null;
         return ctx.icon;
     };
-
-    const interestColor = getInterestColor_();
     const contextIcon = getContextDisplay();
 
     const handleClick = (e) => {
@@ -157,12 +186,36 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
         }
     };
 
-    // Double-clic pour cycle rapide des étoiles
     const handleDoubleClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
         cycleInterest(id);
     };
+
+    // Detect overflow for auto-scroll animation
+    useEffect(() => {
+        if (!photosContainerRef.current || !photosContentRef.current) return;
+        const containerH = photosContainerRef.current.clientHeight;
+        const contentH = photosContentRef.current.scrollHeight;
+        if (contentH > containerH) {
+            setPhotosOverflow(true);
+            setScrollOffset(contentH - containerH);
+        } else {
+            setPhotosOverflow(false);
+            setScrollOffset(0);
+        }
+    }, [memberFriendsTags]);
+
+    // Dynamic text size based on band height
+    const titleFontSize = bandHeight < 35
+        ? `clamp(5px, calc(0.5vw + 3px), 10px)`
+        : `clamp(5px, ${GROUPE.length > 16 ? 'calc(0.6vw + 5px)' : 'calc(0.9vw + 8px)'}, 16px)`;
+    const timeFontSize = bandHeight < 35 ? 'calc(0.4vw + 4px)' : 'calc(0.5vw + 6px)';
+
+    // Followed circle icon component
+    const FollowedIcon = followedFriendsTags.length === 1 ? PersonIcon1
+        : followedFriendsTags.length === 2 ? PersonIcon2
+        : PersonIcon3;
 
     return (
         <div
@@ -180,59 +233,74 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
             onContextMenu={handleRightClick}
             onDoubleClick={handleDoubleClick}
         >
-            {/* Tag indicators */}
-            {isTagged && (
-                <div className="band-tag-container">
-                    {/* Une seule étoile colorée */}
-                    {interestColor && (
-                        <span
-                            className="band-star"
-                            style={{ color: interestColor }}
-                            title={INTEREST_LEVELS[bandTag.interest]?.label}
-                        >
-                            ★
-                        </span>
-                    )}
-                    {/* Icône de contexte (sans background) */}
-                    {contextIcon && (
-                        <span
-                            className="band-context"
-                            title={CONTEXT_TAGS[bandTag.context]?.label}
-                        >
-                            {contextIcon}
-                        </span>
-                    )}
+            {/* ZONE GAUCHE 20px — ma sélection (couleur) + photos potes membre */}
+            <div
+                className="band-left-zone"
+                style={interestColor ? { backgroundColor: interestColor } : undefined}
+                ref={photosContainerRef}
+            >
+                {memberFriendsTags.length > 0 && (
+                    <div
+                        className={`band-left-photos ${photosOverflow ? 'band-left-photos-overflow' : ''}`}
+                        ref={photosContentRef}
+                        style={photosOverflow ? { '--scroll-offset': `-${scrollOffset}px`, '--scroll-duration': `${Math.max(3, memberFriendsTags.length * 1.5)}s` } : undefined}
+                    >
+                        {memberFriendsTags.map((ft, i) => (
+                            ft.photoURL ? (
+                                <img
+                                    key={i}
+                                    src={ft.photoURL}
+                                    alt=""
+                                    referrerPolicy="no-referrer"
+                                    className="band-friend-avatar"
+                                    title={ft.name}
+                                    style={{ borderColor: getInterestColor(ft.interest) || '#888' }}
+                                />
+                            ) : (
+                                <span
+                                    key={i}
+                                    className="band-friend-avatar-fallback"
+                                    title={ft.name}
+                                    style={{ borderColor: getInterestColor(ft.interest) || '#888' }}
+                                >
+                                    {(ft.name || '?')[0].toUpperCase()}
+                                </span>
+                            )
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* CONTENU CENTRAL */}
+            <div className="compact-band-tag">
+                <h4 style={{ fontSize: titleFontSize }}>
+                    {GROUPE}
+                </h4>
+                {bandHeight >= 30 && (
+                    <span style={{ fontSize: timeFontSize }}>
+                        {DEBUT.replace('h', ':')} - {FIN.replace('h', ':')}
+                    </span>
+                )}
+            </div>
+
+            {/* HAUT À DROITE — icône bonhomme(s) suiveurs */}
+            {followedFriendsTags.length > 0 && (
+                <div
+                    className="band-followed-indicator"
+                    title={followedFriendsTags.map(ft => ft.name).join(', ')}
+                >
+                    <FollowedIcon color={getInterestColor(followedHighestInterest) || '#888'} />
                 </div>
             )}
 
-            <div className="compact-band-tag">
-                <h4 style={{
-                    fontSize: `clamp(5px, ${GROUPE.length > 16 ? 'calc(0.6vw + 5px)' : 'calc(0.9vw + 8px)'}, 16px)`,
-                }}>
-                    {GROUPE}
-                </h4>
-                <span style={{ fontSize: 'calc(0.5vw + 6px)' }}>
-                    {DEBUT.replace('h', ':')} - {FIN.replace('h', ':')}
+            {/* BAS À DROITE — icône de contexte */}
+            {contextIcon && (
+                <span
+                    className="band-context-bottom-right"
+                    title={CONTEXT_TAGS[bandTag.context]?.label}
+                >
+                    {contextIcon}
                 </span>
-            </div>
-
-            {/* Friend indicators from group */}
-            {friendsTags.length > 0 && (
-                <div className="friend-tags">
-                    {friendsTags.slice(0, 3).map((ft, i) => (
-                        <span
-                            key={i}
-                            className="friend-dot"
-                            title={ft.name}
-                            style={{
-                                backgroundColor: getInterestColor(ft.interest) || '#888',
-                            }}
-                        />
-                    ))}
-                    {friendsTags.length > 3 && (
-                        <span className="friend-dot-more">+{friendsTags.length - 3}</span>
-                    )}
-                </div>
             )}
         </div>
     );

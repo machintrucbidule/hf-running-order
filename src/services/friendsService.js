@@ -1,13 +1,14 @@
 import { db } from '../firebase';
 import {
-  collection, doc, setDoc, getDocs,
+  collection, doc, setDoc, updateDoc, getDocs, getDoc,
   query, where, arrayUnion, arrayRemove,
   deleteDoc, serverTimestamp, onSnapshot
 } from 'firebase/firestore';
 
 const circlesRef = collection(db, 'circles');
+const metaCodesRef = collection(db, 'metaCodes');
 
-const generateInviteCode = () => {
+export const generateInviteCode = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
   for (let i = 0; i < 7; i++) {
@@ -83,8 +84,79 @@ export const subscribeToCircleMembers = (circleId, callback) => {
 };
 
 export const updateMemberBands = (circleId, userId, taggedBands) => {
-  return setDoc(doc(db, 'circles', circleId, 'members', userId), {
+  return updateDoc(doc(db, 'circles', circleId, 'members', userId), {
     taggedBands,
+    isMember: true,
     lastModified: serverTimestamp(),
-  }, { merge: true });
+  });
+};
+
+export const clearMemberBands = (circleId, userId) => {
+  return updateDoc(doc(db, 'circles', circleId, 'members', userId), {
+    taggedBands: {},
+    isMember: false,
+    lastModified: serverTimestamp(),
+  });
+};
+
+// Meta codes — un code unique pour rejoindre plusieurs cercles
+export const createMetaCode = async (userId, circleIds) => {
+  const code = generateInviteCode();
+  const metaCodeRef = doc(metaCodesRef);
+  await setDoc(metaCodeRef, {
+    code: code.toUpperCase(),
+    circleIds,
+    createdBy: userId,
+    createdAt: serverTimestamp(),
+  });
+  return code;
+};
+
+export const joinByMetaCode = async (code, userId, displayName, photoURL) => {
+  const q = query(metaCodesRef, where('code', '==', code.toUpperCase()));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) throw new Error('Code invalide');
+
+  const metaData = snapshot.docs[0].data();
+  const joinedCircles = [];
+
+  for (const circleId of metaData.circleIds) {
+    const circleDoc = await getDoc(doc(db, 'circles', circleId));
+    if (!circleDoc.exists()) continue;
+
+    const circleData = circleDoc.data();
+    if (circleData.members.includes(userId)) {
+      joinedCircles.push({ id: circleId, name: circleData.name });
+      continue; // déjà membre
+    }
+
+    await setDoc(doc(db, 'circles', circleId), { members: arrayUnion(userId) }, { merge: true });
+    await setDoc(doc(db, 'circles', circleId, 'members', userId), {
+      displayName,
+      photoURL: photoURL || '',
+      taggedBands: {},
+      lastModified: serverTimestamp(),
+    });
+    joinedCircles.push({ id: circleId, name: circleData.name });
+  }
+
+  if (joinedCircles.length === 0) throw new Error('Aucun cercle valide dans ce code');
+  return { circleIds: joinedCircles.map(c => c.id), circleNames: joinedCircles.map(c => c.name), circles: joinedCircles };
+};
+
+// Orchestrateur : essaie code cercle simple, puis meta code
+export const joinByCode = async (code, userId, displayName, photoURL) => {
+  try {
+    const result = await joinCircleByCode(code, userId, displayName, photoURL);
+    return { ...result, isMetaJoin: false };
+  } catch (e) {
+    if (e.message === 'Vous êtes déjà membre de ce cercle') throw e;
+    // Code invalide pour un cercle simple, essayer meta code
+    try {
+      const metaResult = await joinByMetaCode(code, userId, displayName, photoURL);
+      return { ...metaResult, isMetaJoin: true };
+    } catch (metaErr) {
+      throw new Error('Code invalide');
+    }
+  }
 };

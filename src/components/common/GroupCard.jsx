@@ -13,19 +13,26 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
     const positionRef = useRef(position);
     const { state, setInterest, setContext, getBandTag, getInterestColor, updateNote } = useCheckedState();
     const { user } = useAuth();
-    const { activeCircleId, circleMembers } = useFriends();
+    const { visibleCircleIds, circleMembersGrouped } = useFriends();
 
-    // Friends who tagged this band
-    const friendsWhoTagged = useMemo(() => {
-        if (!activeCircleId || !circleMembers.length || !user) return [];
-        return circleMembers
-            .filter(m => m.id !== user.uid)
-            .filter(m => m.taggedBands?.[group.id]?.interest)
-            .map(m => ({
-                name: m.displayName || 'Anonyme',
-                interest: m.taggedBands[group.id].interest,
-            }));
-    }, [activeCircleId, circleMembers, group.id, user]);
+    // Friends who tagged this band, grouped by circle
+    const friendsByCircle = useMemo(() => {
+        if (visibleCircleIds.size === 0 || !user) return [];
+        const result = [];
+        for (const [circleId, circleData] of Object.entries(circleMembersGrouped)) {
+            const taggers = circleData.members
+                .filter(m => m.id !== user.uid)
+                .filter(m => m.taggedBands?.[group.id]?.interest)
+                .map(m => ({
+                    name: m.displayName || 'Anonyme',
+                    interest: m.taggedBands[group.id].interest,
+                }));
+            if (taggers.length > 0) {
+                result.push({ circleId, circleName: circleData.name, taggers });
+            }
+        }
+        return result;
+    }, [visibleCircleIds, circleMembersGrouped, group.id, user]);
     // ...
 
     // Helper to get logo safely (case insensitive?)
@@ -573,30 +580,37 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                 </div>
             </div>
 
-            {friendsWhoTagged.length > 0 && (
+            {friendsByCircle.length > 0 && (
                 <div style={{
                     padding: '4px 12px',
                     fontSize: '0.75rem',
                     color: '#bbb',
                     backgroundColor: 'rgba(255,255,255,0.05)',
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    flexWrap: 'wrap',
+                    flexDirection: 'column',
+                    gap: '2px',
                 }}>
-                    <i className="fa-solid fa-users" style={{ color: '#888', fontSize: '0.65rem' }}></i>
-                    <span>Tagué par </span>
-                    {friendsWhoTagged.map((ft, i) => (
-                        <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                            <span style={{
-                                width: '6px', height: '6px',
-                                borderRadius: '50%',
-                                backgroundColor: getInterestColor(ft.interest),
-                                display: 'inline-block',
-                            }} />
-                            <span style={{ fontWeight: 500 }}>{ft.name}</span>
-                            {i < friendsWhoTagged.length - 1 && <span>, </span>}
-                        </span>
+                    {friendsByCircle.map(({ circleId, circleName, taggers }) => (
+                        <div key={circleId} style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                            <i className="fa-solid fa-users" style={{ color: '#888', fontSize: '0.65rem' }}></i>
+                            {visibleCircleIds.size > 1 ? (
+                                <span style={{ color: '#888', fontStyle: 'italic' }}>{circleName} :</span>
+                            ) : (
+                                <span>Tagué par </span>
+                            )}
+                            {taggers.map((ft, i) => (
+                                <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                    <span style={{
+                                        width: '6px', height: '6px',
+                                        borderRadius: '50%',
+                                        backgroundColor: getInterestColor(ft.interest),
+                                        display: 'inline-block',
+                                    }} />
+                                    <span style={{ fontWeight: 500 }}>{ft.name}</span>
+                                    {i < taggers.length - 1 && <span>, </span>}
+                                </span>
+                            ))}
+                        </div>
                     ))}
                 </div>
             )}

@@ -313,14 +313,16 @@ nav button:hover {
 .band-container {
   padding: 0;
   display: flex;
+  flex-direction: row;
   text-align: center;
-  justify-content: center;
+  justify-content: flex-start;
   margin: 0 auto;
   width: 92%;
   border-radius: 5px;
   overflow: hidden;
-  align-items: center;
+  align-items: stretch;
   z-index: 2;
+  position: relative;
 }
 
 .band-container:hover {
@@ -330,6 +332,13 @@ nav button:hover {
 
 .compact-band-tag {
   color: black;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .compact-band-tag h4 {
@@ -1498,58 +1507,93 @@ nav button:hover {
   border-left: 3px solid var(--tag-color, #FFD700);
 }
 
-/* Band tag container */
-.band-tag-container {
-  position: absolute;
-  top: 2px;
-  right: 2px;
+/* === LEFT ZONE (20px) — user selection color + member friend avatars === */
+.band-left-zone {
+  width: 20px;
+  min-width: 20px;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  z-index: 5;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px 0 0 5px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
 }
 
-.band-stars {
-  font-size: 10px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  line-height: 1;
+.band-left-photos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 0;
 }
 
-.band-context-icon {
+/* Auto-scroll animation when photos overflow */
+.band-left-photos-overflow {
+  animation: scroll-photos var(--scroll-duration, 4s) ease-in-out infinite;
+}
+
+@keyframes scroll-photos {
+  0%, 15% { transform: translateY(0); }
+  42%, 58% { transform: translateY(var(--scroll-offset, 0)); }
+  85%, 100% { transform: translateY(0); }
+}
+
+.band-friend-avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.band-friend-avatar-fallback {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 9px;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 3px;
-  padding: 1px 3px;
-  line-height: 1;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
 }
 
-/* Friend indicators from group */
-.friend-tags {
+/* === TOP RIGHT — followed circle person icons === */
+.band-followed-indicator {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  z-index: 5;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+/* === BOTTOM RIGHT — context icon === */
+.band-context-bottom-right {
   position: absolute;
   bottom: 2px;
-  right: 2px;
-  display: flex;
-  gap: 2px;
-  align-items: center;
+  right: 3px;
+  font-size: 11px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   z-index: 5;
+  line-height: 1;
 }
 
+/* Legacy classes — hidden */
+.band-tag-container,
+.band-stars,
+.band-context-icon,
+.friend-tags,
 .friend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.4);
-  display: inline-block;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.friend-dot-more {
-  font-size: 0.55rem;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 4px;
-  padding: 0 2px;
+  display: none !important;
   line-height: 1.2;
 }
 
@@ -1606,36 +1650,7 @@ nav button:hover {
   text-align: center;
 }
 
-/* Band tag styling - clean without backgrounds */
-.band-tag-container {
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  z-index: 5;
-}
-
-.band-star {
-  font-size: 14px;
-  text-shadow:
-    0 0 3px rgba(0, 0, 0, 0.5),
-    0 1px 2px rgba(0, 0, 0, 0.3);
-  line-height: 1;
-}
-
-.band-context {
-  font-size: 11px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  line-height: 1;
-}
-
-/* Override old styles */
-.band-stars,
-.band-context-icon {
-  display: none !important;
-}
+/* Legacy overrides — all replaced by band-left-zone system */
 
 /* === FIX: Simple white star, no background === */
 .favorite-btn {

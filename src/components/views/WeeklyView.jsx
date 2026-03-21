@@ -31,7 +31,7 @@ const ICONS = {
 const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent }) => {
     const { state, getInterestColor, getBandTag, cycleInterest } = useCheckedState();
     const { user } = useAuth();
-    const { activeCircleId, circleMembers } = useFriends();
+    const { visibleCircleIds, allVisibleMembers } = useFriends();
     const [filterMode, setFilterMode] = useState('favorites'); // 'favorites' or 'all'
     const [colorMode, setColorMode] = useState('transparent'); // 'transparent' or 'scene'
     const [friendsMode, setFriendsMode] = useState(false); // false = mine only, true = mine + friends
@@ -86,9 +86,9 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
 
     // Build set of band IDs tagged by friends
     const friendsTaggedIds = useMemo(() => {
-        if (!friendsMode || !activeCircleId || !circleMembers.length || !user) return new Set();
+        if (!friendsMode || visibleCircleIds.size === 0 || !allVisibleMembers.length || !user) return new Set();
         const ids = new Set();
-        circleMembers
+        allVisibleMembers
             .filter(m => m.id !== user.uid)
             .forEach(m => {
                 Object.entries(m.taggedBands || {}).forEach(([bandId, tag]) => {
@@ -96,7 +96,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                 });
             });
         return ids;
-    }, [friendsMode, activeCircleId, circleMembers, user]);
+    }, [friendsMode, visibleCircleIds, allVisibleMembers, user]);
 
     // --- 1. FILTERING ---
     const filteredGroups = useMemo(() => {
@@ -228,7 +228,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             Couleurs Scènes
                         </button>
                     </div>
-                    {user && activeCircleId && circleMembers.length > 1 && (
+                    {user && visibleCircleIds.size > 0 && allVisibleMembers.length > 1 && (
                         <div className="weekly-filters">
                             <button
                                 className={`weekly-filter-btn ${!friendsMode ? 'active' : ''}`}
