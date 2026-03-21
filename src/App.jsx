@@ -28,6 +28,7 @@ function AppContent() {
   const { user } = useAuth();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [popoverPosition, setPopoverPosition] = useState(null);
+  const groupCardRef = useRef(null);
   const [viewMode, setViewMode] = useState('day');
 
   const [customEvents, setCustomEvents] = useState(() => {
@@ -259,6 +260,23 @@ function AppContent() {
     }
   };
 
+  // Close group card when clicking outside
+  useEffect(() => {
+    if (!selectedGroup) return;
+    const handleClickOutside = (e) => {
+      if (groupCardRef.current && !groupCardRef.current.contains(e.target)) {
+        // Check if clicked on a band — if so, handleGroupSelect will fire and replace the group
+        const clickedBand = e.target.closest('.band-container');
+        if (!clickedBand) {
+          setSelectedGroup(null);
+          setPopoverPosition(null);
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [selectedGroup]);
+
   if (loading) return <div className="loading">Chargement du Hellfest... 🤘</div>;
   if (error) return <div className="error">Erreur : {error.message}</div>;
 
@@ -373,20 +391,14 @@ function AppContent() {
       />
 
       {selectedGroup && (
-        <>
-          <div
-            className="group-card-overlay"
-            onClick={() => setSelectedGroup(null)}
+        <div className="group-card-container" ref={groupCardRef}>
+          <GroupCard
+            group={selectedGroup}
+            onClose={() => setSelectedGroup(null)}
+            position={popoverPosition}
+            onPositionChange={handleCardPositionChange}
           />
-          <div className="group-card-container">
-            <GroupCard
-              group={selectedGroup}
-              onClose={() => setSelectedGroup(null)}
-              position={popoverPosition}
-              onPositionChange={handleCardPositionChange}
-            />
-          </div>
-        </>
+        </div>
       )}
 
       <ConfirmationModal
