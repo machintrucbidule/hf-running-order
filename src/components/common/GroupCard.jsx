@@ -24,7 +24,8 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                 .filter(m => m.id !== user.uid)
                 .filter(m => m.taggedBands?.[group.id]?.interest)
                 .map(m => ({
-                    name: m.displayName || 'Anonyme',
+                    name: (m.displayName || 'Anonyme').replace(/\s*\(.*?\)\s*/g, '').trim(),
+                    photoURL: m.photoURL,
                     interest: m.taggedBands[group.id].interest,
                 }));
             if (taggers.length > 0) {
@@ -586,32 +587,55 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                     fontSize: '0.75rem',
                     color: '#bbb',
                     backgroundColor: 'rgba(255,255,255,0.05)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '2px',
                 }}>
-                    {friendsByCircle.map(({ circleId, circleName, taggers }) => (
-                        <div key={circleId} style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                            <i className="fa-solid fa-users" style={{ color: '#888', fontSize: '0.65rem' }}></i>
-                            {visibleCircleIds.size > 1 ? (
-                                <span style={{ color: '#888', fontStyle: 'italic' }}>{circleName} :</span>
-                            ) : (
-                                <span>Tagué par </span>
-                            )}
-                            {taggers.map((ft, i) => (
-                                <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                    <span style={{
-                                        width: '6px', height: '6px',
-                                        borderRadius: '50%',
-                                        backgroundColor: getInterestColor(ft.interest),
-                                        display: 'inline-block',
-                                    }} />
-                                    <span style={{ fontWeight: 500 }}>{ft.name}</span>
-                                    {i < taggers.length - 1 && <span>, </span>}
-                                </span>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', border: 'none' }}>
+                        <tbody>
+                            {friendsByCircle.map(({ circleId, circleName, taggers }) => (
+                                <tr key={circleId}>
+                                    <td style={{ padding: '3px 8px 3px 0', verticalAlign: 'middle', whiteSpace: 'nowrap', color: '#888', fontStyle: 'italic' }}>
+                                        <i className="fa-solid fa-users" style={{ fontSize: '0.65rem', marginRight: '4px' }}></i>
+                                        {visibleCircleIds.size > 1 ? circleName : 'Tagué par'}
+                                    </td>
+                                    <td style={{ padding: '3px 0', verticalAlign: 'middle' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                            {taggers.map((ft, i) => (
+                                                <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                                    {ft.photoURL ? (
+                                                        <img
+                                                            src={ft.photoURL}
+                                                            alt=""
+                                                            referrerPolicy="no-referrer"
+                                                            style={{
+                                                                width: '16px', height: '16px',
+                                                                borderRadius: '50%',
+                                                                border: `2px solid ${getInterestColor(ft.interest) || '#888'}`,
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <span style={{
+                                                            width: '16px', height: '16px',
+                                                            borderRadius: '50%',
+                                                            border: `2px solid ${getInterestColor(ft.interest) || '#888'}`,
+                                                            backgroundColor: '#555',
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: '0.5rem',
+                                                            color: '#fff',
+                                                            fontWeight: 600,
+                                                        }}>
+                                                            {ft.name[0].toUpperCase()}
+                                                        </span>
+                                                    )}
+                                                    <span style={{ fontWeight: 500 }}>{ft.name}</span>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </td>
+                                </tr>
                             ))}
-                        </div>
-                    ))}
+                        </tbody>
+                    </table>
                 </div>
             )}
 

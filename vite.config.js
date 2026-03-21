@@ -39,6 +39,20 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24 * 365 // 1 an
               }
             }
+          },
+          {
+            urlPattern: /^https:\/\/lh3\.googleusercontent\.com\/.*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'google-avatars-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 jours
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
           }
         ]
       },
