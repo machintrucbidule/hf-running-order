@@ -862,4 +862,199 @@
             display: none;
         }
     }
+
+    /* === TABS === */
+    .stats-tabs {
+        display: flex;
+        gap: 0;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #444;
+    }
+
+    .stats-tab {
+        flex: 1;
+        padding: 8px 4px;
+        background: #222;
+        border: none;
+        color: #888;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .stats-tab:not(:last-child) {
+        border-right: 1px solid #444;
+    }
+
+    .stats-tab.active {
+        background: #E63946;
+        color: #fff;
+        font-weight: 700;
+    }
+
+    .stats-tab:not(.active):hover {
+        background: #333;
+        color: #ccc;
+    }
+
+    /* === CIRCLE STATS: TOP BANDS === */
+    .stats-circle-top-bands {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 20px;
+    }
+
+    .stats-circle-band-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+    }
+
+    .stats-circle-band-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .stats-circle-band-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #eee;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .stats-circle-band-meta {
+        font-size: 0.65rem;
+        color: #888;
+        text-transform: uppercase;
+    }
+
+    .stats-circle-band-avatars {
+        display: flex;
+        gap: 0;
+        flex-shrink: 0;
+        margin-left: 8px;
+    }
+
+    .stats-circle-avatar-wrapper {
+        margin-left: -4px;
+    }
+
+    .stats-circle-avatar-wrapper:first-child {
+        margin-left: 0;
+    }
+
+    .stats-circle-avatar {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid #888;
+        object-fit: cover;
+    }
+
+    .stats-circle-avatar-fallback {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid #888;
+        background: #444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.55rem;
+        color: #aaa;
+    }
+
+    /* === CIRCLE STATS: COMPATIBILITY === */
+    .stats-circle-compat {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .stats-circle-compat-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .stats-circle-compat-member {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 110px;
+        flex-shrink: 0;
+    }
+
+    .stats-circle-compat-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 1px solid #444;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .stats-circle-compat-avatar-fallback {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        color: #aaa;
+        flex-shrink: 0;
+    }
+
+    .stats-circle-compat-name {
+        font-size: 0.8rem;
+        color: #ccc;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .stats-circle-compat-bar-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .stats-circle-compat-bar {
+        flex: 1;
+        height: 6px;
+        background: #333;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .stats-circle-compat-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(to right, #5DADE2, #4CAF50);
+        transition: width 0.5s ease;
+    }
+
+    .stats-circle-compat-pct {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #eee;
+        min-width: 35px;
+        text-align: right;
+    }
 }

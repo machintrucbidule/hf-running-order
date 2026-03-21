@@ -8,12 +8,11 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
     if (!isOpen) return null;
 
     const MENU_ITEMS = [
-        { id: 'stats', label: 'Mes Stats', icon: 'fa-solid fa-chart-pie', color: '#FFD700' },
-        { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#1DB954' },
-        { id: 'contacts', label: 'Mes Contacts', icon: 'fa-solid fa-address-book', color: '#2196F3' },
-        ...(user ? [{ id: 'friends', label: 'Mes Amis', icon: 'fa-solid fa-users', color: '#FF6B35' }] : []),
-        { id: 'share', label: 'Partager', icon: 'fa-solid fa-share-nodes', color: '#9C27B0' },
         { id: 'settings', label: 'Paramètres', icon: 'fa-solid fa-gear', color: '#aaa' },
+        { id: 'friends', label: 'Mes Amis', icon: 'fa-solid fa-users', color: '#FF6B35', disabled: !user },
+        { id: 'stats', label: 'Stats', icon: 'fa-solid fa-chart-pie', color: '#FFD700' },
+        { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#1DB954' },
+        { id: 'share', label: 'Partager', icon: 'fa-solid fa-share-nodes', color: '#9C27B0' },
         { id: 'credits', label: 'Crédits', icon: 'fa-solid fa-heart', color: '#ff6b6b' },
     ];
 
@@ -174,6 +173,8 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
                         <button
                             key={item.id}
                             className="profile-menu-btn"
+                            disabled={item.disabled}
+                            style={item.disabled ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
                             onClick={() => {
                                 onClose();
                                 if (item.id === 'share') {
