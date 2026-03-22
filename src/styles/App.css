@@ -344,6 +344,26 @@ nav button:hover {
 .compact-band-tag h4 {
   font-weight: 700;
   text-transform: uppercase;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Marquee scroll for overflowing band names */
+.band-name-marquee {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.band-name-overflow .band-name-marquee {
+  animation: marquee-scroll var(--marquee-duration, 6s) linear infinite;
+  animation-delay: 1s;
+}
+
+@keyframes marquee-scroll {
+  0%, 10% { transform: translateX(0); }
+  45%, 55% { transform: translateX(var(--marquee-offset)); }
+  90%, 100% { transform: translateX(0); }
 }
 
 .selected-group {

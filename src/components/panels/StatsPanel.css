@@ -13,10 +13,6 @@
     animation: fadeIn 0.3s ease;
 }
 
-.stats-panel-overlay.capturing {
-    background: transparent;
-    backdrop-filter: none;
-}
 
 .stats-panel-container {
     background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
@@ -24,38 +20,148 @@
     max-width: 600px;
     max-height: 90vh;
     border-radius: 20px;
-    padding: 25px;
+    padding: 0;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     border: 1px solid #444;
-    overflow-y: auto;
-    /* Ghost Scroll (Invisible but scrollable) */
-    scrollbar-width: none;
-    /* Firefox */
-    -ms-overflow-style: none;
-    /* IE 10+ */
-
-    &::-webkit-scrollbar {
-        display: none;
-        /* Chrome/Safari */
-    }
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
     position: relative;
     color: #eee;
     font-family: 'Roboto',
     sans-serif;
 
-    /* --- NEW RANK GAUGE WIDGET --- */
+    /* Fixed header area (title + actions + tabs) */
+    .stats-panel-header {
+        flex-shrink: 0;
+        padding: 12px 12px 0 12px;
+        position: relative;
+    }
+
+    /* Scrollable content area */
+    .stats-tab-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 12px 12px 12px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        animation: tabSlideIn 0.35s ease-out both;
+    }
+    .stats-tab-content::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* --- RANK GAUGE WIDGET (grid: 2 columns on desktop) --- */
     .stats-panel-rank-widget {
         background: rgba(0, 0, 0, 0.2);
         border: 1px solid #444;
         border-radius: 15px;
-        padding: 20px;
+        padding: 10px;
         margin-bottom: 25px;
+        display: grid;
+        grid-template-columns: 1fr 180px;
+        gap: 10px 15px;
+        align-items: center;
+        position: relative;
+    }
+
+    .stats-panel-right-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    /* Charts row: radar + pie side by side on desktop */
+    .widget-charts-row {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 0;
+        align-items: center;
+    }
+
+    .widget-radar-wrap {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .widget-chart-cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 0;
+        overflow: visible;
+    }
+
+    .widget-pie-cell {
+        flex: 0 0 180px;
+        justify-content: center;
+    }
+
+    /* Mobile portrait: stack everything vertically */
+    @media (max-width: 500px) {
+        .stats-panel-rank-widget {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats-panel-right-column {
+            width: 100%;
+        }
+
+        .widget-charts-row {
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .widget-radar-wrap {
+            width: 100%;
+            flex: unset;
+        }
+
+        .widget-pie-cell {
+            flex: unset;
+            width: auto;
+        }
+    }
+
+    /* Circle summary box (always horizontal) */
+    .circle-summary-box {
         display: flex;
         flex-direction: row;
         align-items: center;
-        position: relative;
-        /* Ensure no float behavior */
+        justify-content: center;
+        gap: 20px;
+        padding: 10px 0;
+    }
+
+    .circle-stat-item {
+        text-align: center;
+    }
+
+    .circle-stat-val {
+        display: block;
+        font-size: 1.8rem;
+        font-weight: bold;
+        line-height: 1;
+    }
+
+    .circle-stat-label {
+        font-size: 0.6rem;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Stage pie chart */
+    .stage-pie-container {
+        display: flex;
+        justify-content: center;
     }
 
     /* --- LEFT: GAUGE AREA --- */
@@ -146,16 +252,14 @@
         color: #aaa;
     }
 
-    /* --- RIGHT: INFO AREA --- */
+    /* --- LEFT: INFO AREA --- */
     .stats-panel-rank-info {
         flex: 1;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        /* Center horizontally */
         text-align: center;
-        /* Center text */
         gap: 10px;
     }
 
@@ -212,14 +316,13 @@
 
     .stats-panel-actions {
         position: absolute;
-        top: 15px;
-        right: 15px;
+        top: 10px;
+        right: 10px;
         display: flex;
         gap: 10px;
         z-index: 100;
     }
 
-    .stats-share-btn,
     .stats-close-btn {
         background: rgba(255, 255, 255, 0.1);
         border: none;
@@ -235,12 +338,6 @@
         font-size: 1.1rem;
     }
 
-    .stats-share-btn:hover {
-        background: #E63946;
-        color: #000;
-        transform: scale(1.1);
-    }
-
     .stats-close-btn:hover {
         background: rgba(255, 255, 255, 0.2);
         color: #fff;
@@ -250,7 +347,7 @@
     .stats-panel-id-card {
         background: linear-gradient(135deg, #222, #333);
         border-radius: 15px;
-        padding: 20px;
+        padding: 10px;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
@@ -394,6 +491,7 @@
         color: #888;
         margin-bottom: 10px;
         letter-spacing: 1px;
+        font-weight: 700;
     }
 
     .stats-panel-intensity-grid {
@@ -401,6 +499,22 @@
         grid-template-columns: repeat(2, 1fr);
         gap: 15px;
         margin-bottom: 0px;
+        align-items: stretch;
+    }
+
+    .stats-panel-intensity-grid > .stats-panel-day-intensity {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Genre display in day blocks */
+    .daily-genres-container {
+        color: #aaa;
+        font-size: 0.75rem;
+        text-align: center;
+        padding-top: 8px;
+        padding-bottom: 4px;
+        font-style: italic;
     }
 
     @media (max-width: 600px) {
@@ -826,11 +940,9 @@
         display: flex;
         width: 100%;
         height: 40px;
-        margin-bottom: 15px;
+        margin-bottom: 2px;
         margin-top: 5px;
-        /* Space before clashes */
         gap: 2px;
-        /* Small gap between scenic blocks */
         background: rgba(0, 0, 0, 0.2);
         border-radius: 8px;
         overflow: hidden;
@@ -867,10 +979,10 @@
     .stats-tabs {
         display: flex;
         gap: 0;
-        margin-bottom: 20px;
+        margin: 15px 0 0 0;
         border-radius: 8px;
-        overflow: hidden;
         border: 1px solid #444;
+        background: #222;
     }
 
     .stats-tab {
@@ -884,6 +996,14 @@
         cursor: pointer;
         transition: all 0.2s;
         white-space: nowrap;
+    }
+
+    .stats-tab:first-child {
+        border-radius: 8px 0 0 8px;
+    }
+
+    .stats-tab:last-child {
+        border-radius: 0 8px 8px 0;
     }
 
     .stats-tab:not(:last-child) {
@@ -1115,4 +1235,328 @@
         min-width: 35px;
         text-align: right;
     }
+
+    /* animation is applied via the tab content wrapper defined above */
+
+    /* === D4: GENRE CHIPS === */
+    .genre-chips-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        justify-content: center;
+        margin-top: 5px;
+    }
+
+    .genre-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #ddd;
+        white-space: nowrap;
+    }
+
+    .genre-chip-count {
+        font-size: 0.6rem;
+        opacity: 0.7;
+    }
+
+    .genre-chips-container.daily {
+        margin-top: 8px;
+        padding-bottom: 4px;
+    }
+
+    .genre-chips-container.daily .genre-chip {
+        font-size: 0.65rem;
+        padding: 1px 6px;
+    }
+
+    /* === D1: CIRCULAR GAUGE === */
+    .circular-gauge-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        width: 140px;
+        flex-shrink: 0;
+    }
+
+    .circular-gauge-svg {
+        width: 140px;
+        height: 80px;
+        overflow: visible;
+    }
+
+    .circular-gauge-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
+    }
+
+    .circular-gauge-label.active {
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .circular-gauge-label.passed {
+        color: #666;
+        text-decoration: line-through;
+    }
+
+    .circular-gauge-label.pending {
+        color: #555;
+    }
+
+    /* === D2: RADAR CHART === */
+    .radar-chart-container {
+        display: flex;
+        justify-content: center;
+        position: relative;
+        margin-top: 0;
+    }
+
+    .radar-chart-svg {
+        overflow: visible;
+    }
+
+    .radar-label-text {
+        font-size: 0.7rem;
+        font-weight: 600;
+        font-family: Roboto, sans-serif;
+        white-space: nowrap;
+        display: inline-block;
+    }
+
+    /* Left/right label containers rendered by ChartsRow */
+    .radar-label-container-left,
+    .radar-label-container-right {
+        pointer-events: none;
+        height: 1em;
+        display: flex;
+        align-items: center;
+    }
+
+    .radar-label-container-left {
+        justify-content: flex-end;
+    }
+
+    .radar-label-container-right {
+        justify-content: flex-start;
+    }
+
+    /* Scrolling labels — only activates when text overflows its container */
+    .radar-label-scroll {
+        display: inline-block;
+        max-width: 100%;
+    }
+
+    .radar-label-scroll .radar-label-inner {
+        display: inline-block;
+    }
+
+    .radar-label-container-left:has(.radar-label-inner.scrolling) .radar-label-scroll,
+    .radar-label-container-right:has(.radar-label-inner.scrolling) .radar-label-scroll {
+        overflow: hidden;
+    }
+
+    /* === D3: MINI TIMELINE === */
+    .mini-timeline-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        margin: 2px 0;
+    }
+
+    .mini-timeline-hours {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .mini-timeline-hour {
+        font-size: 0.6rem;
+        color: #999;
+        white-space: nowrap;
+    }
+
+    .mini-timeline-container {
+        width: 100%;
+        height: 20px;
+        border-radius: 4px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .mini-timeline-svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    /* === B2: DIVERSITY BADGE === */
+    .diversity-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .diversity-badge.puriste {
+        background: rgba(230, 57, 70, 0.15);
+        color: #E63946;
+        border: 1px solid rgba(230, 57, 70, 0.3);
+    }
+
+    .diversity-badge.equilibre {
+        background: rgba(93, 173, 226, 0.15);
+        color: #5DADE2;
+        border: 1px solid rgba(93, 173, 226, 0.3);
+    }
+
+    .diversity-badge.eclectique {
+        background: rgba(76, 175, 80, 0.15);
+        color: #4CAF50;
+        border: 1px solid rgba(76, 175, 80, 0.3);
+    }
+
+    .diversity-bar {
+        width: 60px;
+        height: 4px;
+        background: #333;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .diversity-bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.8s ease;
+    }
+
+    /* === B4: FAVORITE STAGE === */
+    .favorite-stage-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 8px;
+        font-size: 0.8rem;
+        color: #aaa;
+    }
+
+    .favorite-stage-icon {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
+    }
+
+    .favorite-stage-name {
+        color: #eee;
+        font-weight: 600;
+    }
+
+    .favorite-stage-pct {
+        color: #888;
+        font-size: 0.7rem;
+    }
+
+    /* === C1: RECOMMENDATIONS === */
+    .stats-recommendations-header {
+        font-size: 0.65rem;
+        color: '#4CAF50';
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Section titles with color + icon */
+    .section-title-colored {
+        display: flex;
+        align-items: center;
+    }
+
+    /* Any list followed by an expand button: remove its bottom margin */
+    .stats-circle-top-bands:has(+ .expand-list-btn) {
+        margin-bottom: 0;
+    }
+
+    /* Collapsed list with gradient fade on last item */
+    .collapsed-list {
+        position: relative;
+        margin-bottom: 0 !important;
+    }
+    .collapsed-list::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: linear-gradient(to bottom, transparent, rgba(26, 26, 26, 0.95));
+        pointer-events: none;
+    }
+
+    /* Expand/collapse button */
+    .expand-list-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        margin: 2px auto 0;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 50%;
+        color: #aaa;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .expand-list-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+    }
+}
+
+/* Mobile: popup takes full available width */
+@media (max-width: 500px) {
+    .stats-panel-container {
+        width: 96%;
+        max-width: none;
+        border-radius: 12px;
+    }
+}
+
+@keyframes tabSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes radarLabelScrollLeft {
+    0%, 20% { transform: translateX(0); }
+    80%, 100% { transform: translateX(var(--scroll-amount)); }
+}
+
+@keyframes radarLabelScrollRight {
+    0%, 20% { transform: translateX(0); }
+    80%, 100% { transform: translateX(calc(-1 * var(--scroll-amount))); }
 }

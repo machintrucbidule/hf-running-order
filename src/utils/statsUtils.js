@@ -440,6 +440,102 @@ export const calculateDayPersona = (dayBands, taggedBands, history = null) => {
     };
 };
 
+/**
+ * Extract top genres from a list of bands, weighted by interest priority.
+ * @param {Array} bands - lineup groups
+ * @param {Object} taggedBands - { bandId: { interest } }
+ * @param {number} limit - max genres to return
+ * @returns {Array<{genre: string, count: number}>}
+ */
+export const getTopGenres = (bands, taggedBands, limit = 5) => {
+    if (!bands || bands.length === 0) return [];
+
+    const interestPriority = { must_see: 3, interested: 2, curious: 1 };
+    const genreCounts = {};
+    const genreMaxPriority = {};
+
+    bands.forEach(band => {
+        const interest = taggedBands?.[band.id]?.interest;
+        if (!interest) return;
+        const priority = interestPriority[interest] || 0;
+        const style = band.STYLE || '';
+        // Split on " / " or "/" to get individual genres
+        const genres = style.split(/\s*\/\s*/).map(g => g.trim()).filter(Boolean);
+        genres.forEach(genre => {
+            // Capitalize first letter
+            const normalized = genre.charAt(0).toUpperCase() + genre.slice(1);
+            genreCounts[normalized] = (genreCounts[normalized] || 0) + 1;
+            genreMaxPriority[normalized] = Math.max(genreMaxPriority[normalized] || 0, priority);
+        });
+    });
+
+    return Object.entries(genreCounts)
+        .sort(([genreA, countA], [genreB, countB]) => {
+            if (countB !== countA) return countB - countA;
+            // Tie-break by highest priority band in that genre
+            return (genreMaxPriority[genreB] || 0) - (genreMaxPriority[genreA] || 0);
+        })
+        .slice(0, limit)
+        .map(([genre, count]) => ({ genre, count }));
+};
+
+/**
+ * Get the favorite stage from stats (most bands across all days).
+ * @param {Object} stats - stats object from calculateStats
+ * @returns {{ stage: string, count: number, percentage: number } | null}
+ */
+export const getFavoriteStage = (stats) => {
+    if (!stats || !stats.days) return null;
+    const totalStages = {};
+    Object.values(stats.days).forEach(dayData => {
+        Object.entries(dayData.stages || {}).forEach(([stage, count]) => {
+            totalStages[stage] = (totalStages[stage] || 0) + count;
+        });
+    });
+    const entries = Object.entries(totalStages);
+    if (entries.length === 0) return null;
+    entries.sort(([, a], [, b]) => b - a);
+    const [stage, count] = entries[0];
+    const total = entries.reduce((sum, [, c]) => sum + c, 0);
+    return { stage, count, percentage: Math.round((count / total) * 100) };
+};
+
+/**
+ * Calculate genre diversity score using Shannon entropy (normalized 0-100).
+ * @param {Array} bands - lineup groups
+ * @param {Object} taggedBands - { bandId: { interest } }
+ * @returns {{ score: number, label: string }}
+ */
+export const getDiversityScore = (bands, taggedBands) => {
+    if (!bands || bands.length === 0) return { score: 0, label: 'Puriste' };
+    const genreCounts = {};
+    let total = 0;
+    bands.forEach(band => {
+        const interest = taggedBands?.[band.id]?.interest;
+        if (!interest) return;
+        const genres = (band.STYLE || '').split(/\s*\/\s*/).map(g => g.trim()).filter(Boolean);
+        genres.forEach(genre => {
+            const normalized = genre.charAt(0).toUpperCase() + genre.slice(1);
+            genreCounts[normalized] = (genreCounts[normalized] || 0) + 1;
+            total++;
+        });
+    });
+    const entries = Object.values(genreCounts);
+    if (entries.length <= 1) return { score: 0, label: 'Puriste' };
+    // Shannon entropy
+    let entropy = 0;
+    entries.forEach(count => {
+        const p = count / total;
+        if (p > 0) entropy -= p * Math.log2(p);
+    });
+    const maxEntropy = Math.log2(entries.length);
+    const normalized = maxEntropy > 0 ? Math.round((entropy / maxEntropy) * 100) : 0;
+    let label = 'Puriste';
+    if (normalized >= 70) label = 'Éclectique';
+    else if (normalized >= 40) label = 'Équilibré';
+    return { score: normalized, label };
+};
+
 export const getLevelTitle = (count) => {
     if (count === 0) return "Touriste";
     if (count < 10) return "Découvreur";

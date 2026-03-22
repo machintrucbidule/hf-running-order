@@ -43,6 +43,12 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
     const [photosOverflow, setPhotosOverflow] = useState(false);
     const [scrollOffset, setScrollOffset] = useState(0);
 
+    // Refs for band name marquee overflow detection
+    const bandNameContainerRef = useRef(null);
+    const bandNameTextRef = useRef(null);
+    const [nameOverflow, setNameOverflow] = useState(false);
+    const [nameMarqueeOffset, setNameMarqueeOffset] = useState(0);
+
     // Friend indicators split: member circle (left zone) vs followed circles (top right)
     const { memberFriendsTags, followedFriendsTags } = useMemo(() => {
         if (visibleCircleIds.size === 0 || !allVisibleMembers.length || !user) {
@@ -213,6 +219,20 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
         }
     }, [memberFriendsTags]);
 
+    // Detect band name overflow for marquee animation
+    useEffect(() => {
+        if (!bandNameContainerRef.current || !bandNameTextRef.current) return;
+        const containerW = bandNameContainerRef.current.clientWidth;
+        const textW = bandNameTextRef.current.scrollWidth;
+        if (textW > containerW) {
+            setNameOverflow(true);
+            setNameMarqueeOffset(containerW - textW);
+        } else {
+            setNameOverflow(false);
+            setNameMarqueeOffset(0);
+        }
+    }, [GROUPE, bandHeight]);
+
     // Dynamic text size based on band height
     const titleFontSize = bandHeight < 35
         ? `clamp(5px, calc(0.5vw + 3px), 10px)`
@@ -286,8 +306,18 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
 
             {/* CONTENU CENTRAL */}
             <div className="compact-band-tag">
-                <h4 style={{ fontSize: titleFontSize }}>
-                    {GROUPE}
+                <h4
+                    ref={bandNameContainerRef}
+                    className={nameOverflow ? 'band-name-overflow' : ''}
+                    style={{ fontSize: titleFontSize }}
+                >
+                    <span
+                        ref={bandNameTextRef}
+                        className="band-name-marquee"
+                        style={nameOverflow ? { '--marquee-offset': `${nameMarqueeOffset}px`, '--marquee-duration': `${Math.max(4, Math.abs(nameMarqueeOffset) / 15)}s` } : undefined}
+                    >
+                        {GROUPE}
+                    </span>
                 </h4>
                 {bandHeight >= 30 && (
                     <span style={{ fontSize: timeFontSize }}>
