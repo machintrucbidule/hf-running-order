@@ -20,7 +20,7 @@ import CustomEventModal from './components/modals/CustomEventModal';
 import ImportModal from './components/modals/ImportModal';
 import ConfirmationModal from './components/modals/ConfirmationModal';
 import ContactsPanel from './components/panels/ContactsPanel';
-import WelcomeModal from './components/modals/WelcomeModal';
+// import WelcomeModal from './components/modals/WelcomeModal';
 import { parseShareData } from './utils/sharingUtils';
 
 function AppContent() {
@@ -473,7 +473,6 @@ function AppContent() {
         message={`Le contact "${contactToOverwrite?.username}" existe déjà. Voulez-vous mettre à jour son Running Order ?`}
         confirmText="Mettre à jour"
       />
-      <WelcomeModal />
     </div>
   );
 }

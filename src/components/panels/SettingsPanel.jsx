@@ -151,13 +151,6 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onRefreshLineup, 
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span style={{ color: '#888' }}>
-                                <i className="fa-solid fa-file-lines" style={{ marginRight: '6px', width: '14px', textAlign: 'center' }}></i>
-                                Dern. modif CSV
-                            </span>
-                            <span>{formatDate(lineupMeta.csvLastmod)}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#888' }}>
                                 <i className="fa-solid fa-users" style={{ marginRight: '6px', width: '14px', textAlign: 'center' }}></i>
                                 Groupes chargés
                             </span>

@@ -1,0 +1,279 @@
+.help-panel {
+    background: rgba(30, 30, 35, 0.98);
+    border-radius: 16px;
+    max-width: 600px;
+    width: 92%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* Desktop: wider panel */
+@media (min-width: 768px) {
+    .help-panel {
+        max-width: 640px;
+        width: 70%;
+        max-height: 80vh;
+    }
+}
+
+@media (min-width: 1200px) {
+    .help-panel {
+        max-width: 700px;
+    }
+}
+
+/* ===== FIXED HEADER ===== */
+.help-panel-header {
+    flex-shrink: 0;
+    padding: 20px 24px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(30, 30, 35, 0.98);
+    border-radius: 16px 16px 0 0;
+}
+
+.help-panel-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.help-panel-header h2 {
+    color: white;
+    font-size: 1.4rem;
+    font-weight: 700;
+    font-family: 'Metal Mania', cursive;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+}
+
+.help-close-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.help-close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.help-intro {
+    color: #999;
+    font-size: 0.82rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* ===== SCROLLABLE CONTENT ===== */
+.help-sections {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 0;
+}
+
+/* ===== ACCORDION HEADER ===== */
+.help-section-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 13px 24px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #ccc;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.help-section-header:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.help-section.open .help-section-header {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.help-section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.help-section-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 0.85rem;
+}
+
+.help-section-header .fa-chevron-up,
+.help-section-header .fa-chevron-down {
+    font-size: 0.65rem;
+    color: #555;
+    transition: color 0.2s;
+}
+
+.help-section-header:hover .fa-chevron-up,
+.help-section-header:hover .fa-chevron-down {
+    color: #888;
+}
+
+/* ===== ACCORDION CONTENT ===== */
+.help-section-content {
+    padding: 8px 24px 16px 28px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 3px solid transparent;
+    margin-left: 21px;
+    animation: help-fade-in 0.2s ease;
+}
+
+@keyframes help-fade-in {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== CONTENT BLOCKS ===== */
+.help-block {
+    margin: 14px 0;
+}
+
+.help-block:first-child {
+    margin-top: 6px;
+}
+
+.help-block h4 {
+    color: #ddd;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.help-block p {
+    color: #aaa;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    margin: 4px 0;
+}
+
+.help-block strong {
+    color: #ddd;
+}
+
+.help-block em {
+    color: #bbb;
+}
+
+/* ===== LISTS ===== */
+.help-list {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0;
+}
+
+.help-list li {
+    color: #aaa;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    padding: 4px 0 4px 14px;
+    position: relative;
+}
+
+.help-list li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: #666;
+    font-weight: bold;
+    font-size: 1em;
+}
+
+.help-list li strong {
+    color: #ddd;
+}
+
+.help-list li i {
+    margin-right: 3px;
+}
+
+/* ===== STATUS DOTS ===== */
+.help-list-status li::before {
+    content: '';
+}
+
+.help-status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 6px currentColor;
+}
+
+/* ===== HELP NOTE (small aside) ===== */
+.help-note {
+    display: block;
+    font-size: 0.75rem;
+    color: #777;
+    font-style: italic;
+    margin-top: 2px;
+    padding-left: 2px;
+}
+
+/* ===== HELP TIP (highlighted) ===== */
+.help-tip {
+    background: rgba(255, 215, 0, 0.06);
+    border-left: 3px solid #FFD700;
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    margin: 8px 0;
+    font-size: 0.8rem !important;
+    color: #bbb !important;
+}
+
+/* ===== INLINE ICONS ===== */
+.help-block i,
+.help-section-content i {
+    font-size: 0.85em;
+}
+
+/* ===== SCROLLBAR ===== */
+.help-sections::-webkit-scrollbar {
+    width: 4px;
+}
+
+.help-sections::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+}
+
+.help-sections::-webkit-scrollbar-track {
+    background: transparent;
+}
