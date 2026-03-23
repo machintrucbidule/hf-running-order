@@ -8,7 +8,7 @@ const FILTERS = [
     { id: 'all_circles', label: 'Mes cercles', icon: 'fa-users', needsCircle: true },
 ];
 
-const FilterBar = ({ activeFilter, onFilterChange }) => {
+const FilterBar = ({ activeFilter, onFilterChange, onOpenFilter, filterOpen }) => {
     const { visibleCircleIds } = useFriends();
     const hasCircles = visibleCircleIds && visibleCircleIds.size > 0;
 
@@ -21,16 +21,28 @@ const FilterBar = ({ activeFilter, onFilterChange }) => {
 
     return (
         <div className="filter-bar">
-            {FILTERS.filter(f => !f.needsCircle || hasCircles).map(f => (
+            <div className="filter-bar-pills">
+                {FILTERS.filter(f => !f.needsCircle || hasCircles).map(f => (
+                    <button
+                        key={f.id}
+                        className={`filter-pill ${activeFilter === f.id ? 'active' : ''}`}
+                        onClick={() => onFilterChange(f.id)}
+                    >
+                        <i className={`fa-solid ${f.icon}`}></i>
+                        <span>{f.label}</span>
+                    </button>
+                ))}
+            </div>
+            {onOpenFilter && (
                 <button
-                    key={f.id}
-                    className={`filter-pill ${activeFilter === f.id ? 'active' : ''}`}
-                    onClick={() => onFilterChange(f.id)}
+                    className={`filter-pill filter-advanced-btn ${filterOpen ? 'active' : ''}`}
+                    onClick={onOpenFilter}
+                    title="Filtres des scènes"
                 >
-                    <i className={`fa-solid ${f.icon}`}></i>
-                    <span>{f.label}</span>
+                    <i className="fa-solid fa-tent"></i>
+                    <span>Scènes</span>
                 </button>
-            ))}
+            )}
         </div>
     );
 };

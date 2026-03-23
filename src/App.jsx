@@ -24,7 +24,7 @@ import WelcomeModal from './components/modals/WelcomeModal';
 import { parseShareData } from './utils/sharingUtils';
 
 function AppContent() {
-  const { data: groups, loading, error } = useLineup();
+  const { data: groups, loading, error, refresh: refreshLineup, refreshing: lineupRefreshing } = useLineup();
   const { state, setDay, setState, isGuestMode, guestRo, setGuestRo } = useCheckedState();
   const { user } = useAuth();
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -43,6 +43,7 @@ function AppContent() {
   const [editingEvent, setEditingEvent] = useState(null);
 
   const [bandFilter, setBandFilter] = useState(() => localStorage.getItem('bandFilter') || 'all');
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const [importData, setImportData] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -230,8 +231,11 @@ function AppContent() {
 
   const handleGroupSelect = (group, event) => {
     // Quick play mode: clicking a band switches playback instead of opening popup
-    if (quickPlay && playerGroup && group && group.DEEZER) {
-      setPlayerGroup(group);
+    if (quickPlay && playerGroup && group) {
+      if (group.DEEZER) {
+        setPlayerGroup(group);
+      }
+      // No DEEZER link: do nothing (no popup, no playback)
       return;
     }
     if (group) {
@@ -316,7 +320,6 @@ function AppContent() {
   return (
     <div
       className={`App ${selectedGroup ? 'group-selected' : ''} ${playerGroup ? 'player-active' : ''}`}
-      style={{ '--music-player-height': playerGroup ? '85px' : '0px' }}
     >
       <HeaderBar
         viewMode={viewMode}
@@ -333,6 +336,20 @@ function AppContent() {
         onExitGuestMode={() => setGuestRo(null)}
         onClearCustomEvents={handleClearCustomEvents}
         onGroupClick={handleGroupSelect}
+        playerActive={!!playerGroup}
+        quickPlay={quickPlay}
+        filterOpen={filterOpen}
+        onFilterClose={() => setFilterOpen(false)}
+        onTogglePlayer={() => {
+          if (playerGroup) {
+            handleClosePlayer();
+          } else {
+            setPlayerGroup({ _empty: true });
+            setQuickPlay(true);
+          }
+        }}
+        onRefreshLineup={refreshLineup}
+        lineupRefreshing={lineupRefreshing}
       />
 
       {isGuestMode && (
@@ -371,7 +388,7 @@ function AppContent() {
       )}
 
       {viewMode === 'day' && (
-        <FilterBar activeFilter={bandFilter} onFilterChange={setBandFilter} />
+        <FilterBar activeFilter={bandFilter} onFilterChange={setBandFilter} onOpenFilter={() => setFilterOpen(true)} filterOpen={filterOpen} />
       )}
       {viewMode === 'day' && <Navigation />}
 
@@ -384,6 +401,7 @@ function AppContent() {
                 selectGroup={handleGroupSelect}
                 selectedGroupId={selectedGroup?.id}
                 playerGroupId={playerGroup?.id}
+                quickPlay={quickPlay}
                 day={state.day}
                 bandFilter={bandFilter}
                 customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}

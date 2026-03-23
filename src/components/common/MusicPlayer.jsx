@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '../../constants';
+import bandLogos from '../../data/bandLogos.json';
 
 function extractDeezerArtistId(url) {
     if (!url) return null;
@@ -15,8 +16,18 @@ function formatDuration(seconds) {
 }
 
 const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
-    const artistId = extractDeezerArtistId(group.DEEZER);
+    const isEmptyPlayer = !group || group._empty;
+    const artistId = isEmptyPlayer ? null : extractDeezerArtistId(group.DEEZER);
     const audioRef = useRef(null);
+    const playerRef = useRef(null);
+    const line1Ref = useRef(null);
+    const line1ContainerRef = useRef(null);
+    const contextRef = useRef(null);
+    const contextContainerRef = useRef(null);
+    const [line1Overflow, setLine1Overflow] = useState(false);
+    const [line1Offset, setLine1Offset] = useState(0);
+    const [contextOverflow, setContextOverflow] = useState(false);
+    const [contextOffset, setContextOffset] = useState(0);
     const [tracks, setTracks] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -34,6 +45,23 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
     const bandTag = getBandTag(group.id);
     const currentInterest = bandTag?.interest;
     const currentContext = bandTag?.context;
+
+    // Dynamically update --music-player-height based on actual player height
+    useEffect(() => {
+        const el = playerRef.current;
+        if (!el) return;
+        const update = () => {
+            const h = el.getBoundingClientRect().height;
+            document.documentElement.style.setProperty('--music-player-height', `${h}px`);
+        };
+        const observer = new ResizeObserver(update);
+        observer.observe(el);
+        update();
+        return () => {
+            observer.disconnect();
+            document.documentElement.style.setProperty('--music-player-height', '0px');
+        };
+    }, []);
 
     // Close tag dropdown on outside click
     useEffect(() => {
@@ -55,7 +83,7 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
 
         // Try fetch first, fallback to JSONP if CORS blocked
         const controller = new AbortController();
-        fetch(`https://api.deezer.com/artist/${artistId}/top?limit=5`, { signal: controller.signal })
+        fetch(`https://api.deezer.com/artist/${artistId}/top?limit=10`, { signal: controller.signal })
             .then(res => res.json())
             .then(data => {
                 const validTracks = (data.data || []).filter(t => t.preview);
@@ -71,7 +99,7 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
                 // CORS blocked — fallback to JSONP
                 const cbName = `dz_cb_${Date.now()}`;
                 const script = document.createElement('script');
-                script.src = `https://api.deezer.com/artist/${artistId}/top?limit=5&output=jsonp&callback=${cbName}`;
+                script.src = `https://api.deezer.com/artist/${artistId}/top?limit=10&output=jsonp&callback=${cbName}`;
                 window[cbName] = (data) => {
                     const validTracks = (data.data || []).filter(t => t.preview);
                     if (validTracks.length === 0) {
@@ -124,7 +152,36 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
         };
         audio.addEventListener('timeupdate', handleTimeUpdate);
         return () => audio.removeEventListener('timeupdate', handleTimeUpdate);
-    }, []);
+    }, [artistId]);
+
+    // Detect overflow for marquee on mobile info lines
+    useEffect(() => {
+        const checkOverflow = () => {
+            if (line1Ref.current && line1ContainerRef.current) {
+                const textW = line1Ref.current.scrollWidth;
+                const containerW = line1ContainerRef.current.clientWidth;
+                if (textW > containerW) {
+                    setLine1Overflow(true);
+                    setLine1Offset(containerW - textW);
+                } else {
+                    setLine1Overflow(false);
+                }
+            }
+            if (contextRef.current && contextContainerRef.current) {
+                const textW = contextRef.current.scrollWidth;
+                const containerW = contextContainerRef.current.clientWidth;
+                if (textW > containerW) {
+                    setContextOverflow(true);
+                    setContextOffset(containerW - textW);
+                } else {
+                    setContextOverflow(false);
+                }
+            }
+        };
+        checkOverflow();
+        window.addEventListener('resize', checkOverflow);
+        return () => window.removeEventListener('resize', checkOverflow);
+    }, [currentIndex, tracks, artistId]);
 
     // Auto-next on track end
     useEffect(() => {
@@ -192,12 +249,53 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
         return <span style={{ color: '#888', fontSize: '1.6rem' }}>☆</span>;
     };
 
-    if (!artistId) return null;
-
     const currentTrack = tracks[currentIndex];
 
+    const logoPath = !isEmptyPlayer ? bandLogos[group.GROUPE] : null;
+
+    // Empty player state (opened from toolbar, no artist yet)
+    if (!artistId) {
+        return (
+            <div className="music-player" ref={playerRef}>
+                <div className="music-player-progress-container">
+                    <div className="music-player-progress" style={{ width: '0%' }} />
+                </div>
+                <div className="music-player-top">
+                    <div className="music-player-info">
+                        <span className="music-player-track" style={{ color: '#888' }}>Cliquez sur un artiste pour lancer la lecture</span>
+                    </div>
+                    <div className="music-player-extras">
+                        <button
+                            className={`music-player-quickplay-btn ${quickPlay ? 'active' : ''}`}
+                            onClick={onToggleQuickPlay}
+                            title={quickPlay ? 'Désactiver la lecture rapide' : 'Activer la lecture rapide'}
+                        >
+                            <i className="fa-solid fa-bolt"></i>
+                        </button>
+                        <button className="music-player-close-top" onClick={onClose} title="Fermer le lecteur">
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+                <div className="music-player-bar">
+                    <div className="music-player-controls">
+                        <button disabled><i className="fa-solid fa-backward-step"></i></button>
+                        <button disabled><i className="fa-solid fa-play"></i></button>
+                        <button disabled><i className="fa-solid fa-forward-step"></i></button>
+                    </div>
+                </div>
+                <audio ref={audioRef} />
+            </div>
+        );
+    }
+
     return (
-        <div className="music-player">
+        <div className="music-player" ref={playerRef}>
+            {logoPath && (
+                <div className="music-player-logo">
+                    <img src={`${import.meta.env.BASE_URL}${logoPath}`} alt={group.GROUPE} />
+                </div>
+            )}
             <div
                 className="music-player-progress-container"
                 onClick={(e) => {
@@ -217,9 +315,25 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
                         <span className="music-player-track">{error}</span>
                     ) : currentTrack ? (
                         <>
-                            <span className="music-player-track">{currentTrack.title_short || currentTrack.title}</span>
-                            <span className="music-player-artist">{group.GROUPE}</span>
-                            <span className="music-player-context">{group.SCENE} — {group.DAY} {group.DEBUT}{group.STYLE ? ` — ${group.STYLE}` : ''}</span>
+                            <div className="music-player-info-line1" ref={line1ContainerRef}>
+                                <span
+                                    className={`music-player-info-line1-inner ${line1Overflow ? 'overflowing' : ''}`}
+                                    ref={line1Ref}
+                                    style={line1Overflow ? { '--marquee-offset': `${line1Offset}px` } : undefined}
+                                >
+                                    <span className="music-player-track">{currentTrack.title_short || currentTrack.title}</span>
+                                    <span className="music-player-artist">{group.GROUPE}</span>
+                                </span>
+                            </div>
+                            <div className="music-player-context" ref={contextContainerRef}>
+                                <span
+                                    className={contextOverflow ? 'overflowing' : ''}
+                                    ref={contextRef}
+                                    style={contextOverflow ? { '--marquee-offset': `${contextOffset}px` } : undefined}
+                                >
+                                    {group.SCENE} — {group.DAY} {group.DEBUT}{group.STYLE ? ` — ${group.STYLE}` : ''}
+                                </span>
+                            </div>
                         </>
                     ) : null}
                 </div>

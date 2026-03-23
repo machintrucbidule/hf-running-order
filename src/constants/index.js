@@ -116,21 +116,21 @@ export const INTEREST_LEVELS = {
     id: 'must_see',
     label: 'Incontournable',
     stars: 3,
-    defaultColor: '#E63946', // Rouge vif
+    defaultColor: '#D13440', // Rouge vif
     sentiment: 'very_positive',
   },
   interested: {
     id: 'interested',
     label: 'Intéressé',
     stars: 2,
-    defaultColor: '#F4A261', // Orange doux
+    defaultColor: '#E5841B', // Orange
     sentiment: 'positive',
   },
   curious: {
     id: 'curious',
     label: 'Curieux',
     stars: 1,
-    defaultColor: '#5DADE2', // Bleu ciel
+    defaultColor: '#4E90BD', // Bleu ciel
     sentiment: 'neutral_positive',
   },
 };
@@ -162,3 +162,5 @@ export const CONTEXT_TAGS = {
 export const CONTEXT_ORDER = ['with_friend', 'strategic', 'skip'];
 
 export const GOOGLE_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTmGfmaVsqb8_2Ivh5DHxqjhcMnQJb7Tu98XAGaet45tdmA8k9CRpZVNeHGV4PUzyOg97u3PYUQO5Zc/pub?gid=1801148757&single=true&output=csv';
+
+export const GOOGLE_SHEETS_INCREMENTAL_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQt3BsIJIaQvO3hHOg_JPcX9C-4vRs7fRzcCJ0cc6vBdYmX8yTooBUkdGk_7_snS6teS8nscrnpqlZ2/pub?gid=0&single=true&output=csv';

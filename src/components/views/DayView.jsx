@@ -151,7 +151,7 @@ const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth, dayStartM
     );
 };
 
-const DayView = ({ groups, selectGroup, selectedGroupId, playerGroupId, day, bandFilter, customEvents = [], onDeleteCustomEvent, onEditCustomEvent }) => {
+const DayView = ({ groups, selectGroup, selectedGroupId, playerGroupId, quickPlay, day, bandFilter, customEvents = [], onDeleteCustomEvent, onEditCustomEvent }) => {
     const { state } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
@@ -360,6 +360,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, playerGroupId, day, ban
                                     selectGroup={selectGroup}
                                     selectedGroupId={selectedGroupId}
                                     playerGroupId={playerGroupId}
+                                    quickPlay={quickPlay}
                                     halfWidth={showS1 && showS2}
                                     side="left"
                                     onTagClick={handleTagClick}
@@ -377,6 +378,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, playerGroupId, day, ban
                                     selectGroup={selectGroup}
                                     selectedGroupId={selectedGroupId}
                                     playerGroupId={playerGroupId}
+                                    quickPlay={quickPlay}
                                     halfWidth={showS1 && showS2}
                                     side="right"
                                     onTagClick={handleTagClick}

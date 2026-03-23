@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, INTEREST_ORDER } from '../../constants';
+import { getLineupMeta } from '../../hooks/useLineup';
 
-const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents }) => {
+const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onRefreshLineup, lineupRefreshing }) => {
     const { state, setState, getInterestColor, setInterestColor, resetInterestColors, clearAllFavorites } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [cacheClearing, setCacheClearing] = useState(false);
+    const [lineupMeta, setLineupMeta] = useState({});
 
     useEffect(() => {
         const handleResize = () => setWindowWidth(window.innerWidth);
@@ -25,6 +28,19 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents }) => {
 
     const handleLanguageChange = (lang) => {
         setState(prev => ({ ...prev, language: lang }));
+    };
+
+    // Refresh lineup meta when panel opens or after refresh
+    useEffect(() => {
+        if (isOpen) setLineupMeta(getLineupMeta());
+    }, [isOpen, lineupRefreshing]);
+
+    const formatDate = (ts) => {
+        if (!ts) return '—';
+        // If it's a string like "23/03/2026 14:47:19", return as-is
+        if (typeof ts === 'string') return ts;
+        // If it's a timestamp number
+        return new Date(ts).toLocaleString('fr-FR');
     };
 
     if (!isOpen) return null;
@@ -120,6 +136,112 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents }) => {
                     {/* (Option Vue étendue déplacée dans DayView) */}
 
 
+                </div>
+
+                {/* Données du lineup */}
+                <div className="settings-section">
+                    <h3>Données du lineup</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: '#ccc' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#888' }}>
+                                <i className="fa-solid fa-clock" style={{ marginRight: '6px', width: '14px', textAlign: 'center' }}></i>
+                                Dern. refresh
+                            </span>
+                            <span>{formatDate(lineupMeta.lastRefresh)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#888' }}>
+                                <i className="fa-solid fa-file-lines" style={{ marginRight: '6px', width: '14px', textAlign: 'center' }}></i>
+                                Dern. modif CSV
+                            </span>
+                            <span>{formatDate(lineupMeta.csvLastmod)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#888' }}>
+                                <i className="fa-solid fa-users" style={{ marginRight: '6px', width: '14px', textAlign: 'center' }}></i>
+                                Groupes chargés
+                            </span>
+                            <span>{lineupMeta.groupCount ?? '—'}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#888' }}>
+                                <i className="fa-solid fa-layer-group" style={{ marginRight: '6px', width: '14px', textAlign: 'center' }}></i>
+                                Overrides appliqués
+                            </span>
+                            <span>{lineupMeta.overrideCount ?? '—'}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#888' }}>
+                                <i className="fa-solid fa-database" style={{ marginRight: '6px', width: '14px', textAlign: 'center' }}></i>
+                                Source
+                            </span>
+                            <span style={{ color: lineupMeta.source === 'google-sheets' ? '#4CAF50' : '#ff9800' }}>
+                                {lineupMeta.source === 'google-sheets' ? 'Google Sheets' : lineupMeta.source === 'fallback' ? 'Fichier local' : '—'}
+                            </span>
+                        </div>
+                    </div>
+                    <button
+                        className="settings-reset-btn"
+                        style={{
+                            width: '100%',
+                            marginTop: '12px',
+                            backgroundColor: '#2a2a2a',
+                            border: '1px solid #555',
+                            opacity: lineupRefreshing ? 0.6 : 1,
+                        }}
+                        disabled={lineupRefreshing}
+                        onClick={async () => {
+                            if (onRefreshLineup) {
+                                await onRefreshLineup();
+                                setLineupMeta(getLineupMeta());
+                            }
+                        }}
+                    >
+                        <i className={`fa-solid ${lineupRefreshing ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'}`} style={{ marginRight: '8px' }}></i>
+                        {lineupRefreshing ? 'Mise à jour en cours...' : 'Forcer la mise à jour du lineup'}
+                    </button>
+                </div>
+
+                {/* Maintenance */}
+                <div className="settings-section">
+                    <h3>Maintenance</h3>
+                    <button
+                        className="settings-reset-btn"
+                        style={{
+                            width: '100%',
+                            marginTop: '10px',
+                            backgroundColor: '#2a2a2a',
+                            border: '1px solid #555',
+                            opacity: cacheClearing ? 0.6 : 1,
+                        }}
+                        disabled={cacheClearing}
+                        onClick={async () => {
+                            setCacheClearing(true);
+                            try {
+                                // Unregister all service workers
+                                const registrations = await navigator.serviceWorker.getRegistrations();
+                                for (const reg of registrations) {
+                                    await reg.unregister();
+                                }
+                                // Clear all caches
+                                const cacheNames = await caches.keys();
+                                for (const name of cacheNames) {
+                                    await caches.delete(name);
+                                }
+                                // Reload to re-download everything
+                                window.location.reload(true);
+                            } catch (err) {
+                                console.error('Cache clear failed:', err);
+                                setCacheClearing(false);
+                            }
+                        }}
+                    >
+                        <i className={`fa-solid ${cacheClearing ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'}`} style={{ marginRight: '8px' }}></i>
+                        {cacheClearing ? 'Nettoyage en cours...' : "Vider le cache et recharger l'application"}
+                    </button>
+                    <p style={{ color: '#888', fontSize: '0.75em', marginTop: '5px', textAlign: 'center' }}>
+                        Force le re-téléchargement de l'application. Vos données sont conservées.
+                    </p>
                 </div>
 
                 {/* Zone de danger */}

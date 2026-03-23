@@ -131,6 +131,63 @@ export function parseCSVToJSON(csvData) {
   }
 }
 
+export function parseIncrementalCSV(csvData) {
+  try {
+    const lines = csvData.split('\n').filter(line => line.trim());
+    if (lines.length < 3) return new Map();
+
+    const firstLine = parseCSVLine(lines[0]);
+    const headerLineIndex = firstLine[0] === 'LASTMOD' ? 1 : 0;
+    const headers = parseCSVLine(lines[headerLineIndex]);
+
+    const map = new Map();
+
+    for (let i = headerLineIndex + 1; i < lines.length; i++) {
+      const cells = parseCSVLine(lines[i]);
+      if (!cells[0]) continue;
+
+      const rowObject = {};
+      for (let j = 0; j < headers.length; j++) {
+        const header = headers[j];
+        let value = cells[j] || '';
+        if (header === 'id') {
+          value = parseInt(value, 10) || 0;
+        } else if (value === 'null' || value === '') {
+          value = null;
+        }
+        rowObject[header] = value;
+      }
+
+      if (rowObject.id) {
+        map.set(rowObject.id, rowObject);
+      }
+    }
+
+    return map;
+  } catch (error) {
+    console.error('❌ Erreur parsing CSV incrémental:', error);
+    return new Map();
+  }
+}
+
+export function mergeLineupData(originalData, incrementalMap) {
+  if (!incrementalMap || incrementalMap.size === 0) return originalData;
+
+  return originalData.map(group => {
+    const override = incrementalMap.get(group.id);
+    if (!override) return group;
+
+    const merged = { ...group };
+    for (const [key, value] of Object.entries(override)) {
+      if (key === 'id') continue;
+      if (value !== null && value !== undefined && value !== '') {
+        merged[key] = value;
+      }
+    }
+    return merged;
+  });
+}
+
 export async function fetchAndParseGoogleSheetsCSV(url) {
   try {
     const response = await fetch(url);

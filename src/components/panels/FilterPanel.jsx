@@ -57,8 +57,8 @@ const FilterPanel = ({ isOpen, onClose }) => {
             <div className="filter-panel" onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
                 <div className="panel-header">
                     <h2 style={{ fontFamily: 'Metal Mania', letterSpacing: '2px' }}>
-                        <i className="fa-solid fa-filter"></i>
-                        Filtres
+                        <i className="fa-solid fa-tent"></i>
+                        Scènes
                     </h2>
                     <button
                         onClick={onClose}

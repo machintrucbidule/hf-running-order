@@ -31,7 +31,7 @@ const PersonIcon3 = ({ color }) => (
     </svg>
 );
 
-const Band = ({ group, selectGroup, selectedGroupId, playerGroupId, onTagClick, dayStartMinutes, dayEndMinutes, bandFilter }) => {
+const Band = ({ group, selectGroup, selectedGroupId, playerGroupId, quickPlay, onTagClick, dayStartMinutes, dayEndMinutes, bandFilter }) => {
     const { GROUPE, SCENE, DEBUT, FIN, id } = group;
     const { state, getBandTag, getInterestColor, cycleInterest } = useCheckedState();
     const { user } = useAuth();
@@ -235,10 +235,11 @@ const Band = ({ group, selectGroup, selectedGroupId, playerGroupId, onTagClick, 
     }, [GROUPE, bandHeight]);
 
     // Dynamic text size based on band height
+    // Use max(vw, px) to ensure minimum readable size on mobile
     const titleFontSize = bandHeight < 35
-        ? `clamp(5px, calc(0.5vw + 3px), 10px)`
-        : `clamp(5px, ${GROUPE.length > 16 ? 'calc(0.6vw + 5px)' : 'calc(0.9vw + 8px)'}, 16px)`;
-    const timeFontSize = bandHeight < 35 ? 'calc(0.4vw + 4px)' : 'calc(0.5vw + 6px)';
+        ? `clamp(8px, calc(0.5vw + 3px), 10px)`
+        : `clamp(9px, ${GROUPE.length > 16 ? 'calc(0.6vw + 5px)' : 'calc(0.9vw + 8px)'}, 16px)`;
+    const timeFontSize = bandHeight < 35 ? 'clamp(7px, calc(0.4vw + 4px), 9px)' : 'calc(0.5vw + 6px)';
 
     // Followed circle icon component
     const FollowedIcon = followedFriendsTags.length === 1 ? PersonIcon1
@@ -261,6 +262,7 @@ const Band = ({ group, selectGroup, selectedGroupId, playerGroupId, onTagClick, 
                     ? chroma.mix(chroma(sceneColors[SCENE]).luminance(0.6), sceneColors[SCENE], 0.5).hex()
                     : chroma(sceneColors[SCENE]).luminance(0.6).hex(),
                 zIndex: isHighlighted ? 1 : undefined,
+                opacity: (quickPlay && !group.DEEZER) ? 0.66 : undefined,
                 display: (!state.scenes[SCENE.toLowerCase().replace(' ', '')] || !isFilterVisible) ? 'none' : 'flex',
             }}
             onClick={handleClick}

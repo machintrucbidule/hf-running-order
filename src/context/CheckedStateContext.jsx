@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext, useRef } from 'r
 import { DEFAULT_COLORS, INTEREST_LEVELS, CONTEXT_TAGS } from '../constants';
 import { migrateOldData } from '../utils/migrationUtils';
 import { useAuth } from './AuthContext';
-import { fetchUserData, saveUserData, saveUserDataImmediate } from '../services/firestoreSync';
+import { fetchUserData, saveUserData, saveUserDataImmediate, getSyncStats, setOnSyncResult, resetSyncStats } from '../services/firestoreSync';
 
 export const CheckedStateContext = createContext();
 
@@ -78,8 +78,19 @@ const mergeWithInitialState = (data) => ({
 export const CheckedStateProvider = ({ children }) => {
     const { user, loading: authLoading } = useAuth();
     const [syncStatus, setSyncStatus] = useState('idle');
+    const [lastSyncError, setLastSyncError] = useState(null);
     const [hasSynced, setHasSynced] = useState(false);
     const skipNextFirestoreWrite = useRef(false);
+
+    // Register callback for sync results from firestoreSync
+    useEffect(() => {
+        setOnSyncResult((status, errorMsg) => {
+            setSyncStatus(status);
+            if (status === 'error') setLastSyncError(errorMsg);
+            else setLastSyncError(null);
+        });
+        return () => setOnSyncResult(null);
+    }, []);
 
     const [state, setState] = useState(() => {
         try {
@@ -166,8 +177,25 @@ export const CheckedStateProvider = ({ children }) => {
         if (!user && !authLoading) {
             setHasSynced(false);
             setSyncStatus('idle');
+            resetSyncStats();
         }
     }, [user, authLoading]);
+
+    const forceSync = async () => {
+        if (!user) return;
+        setSyncStatus('syncing');
+        try {
+            await saveUserDataImmediate(user.uid, {
+                checkedState: state,
+                displayName: user.displayName || '',
+            });
+            setSyncStatus('synced');
+        } catch (err) {
+            console.error('Force sync failed:', err);
+            setSyncStatus('error');
+            setLastSyncError(err.message);
+        }
+    };
 
     const resetState = () => {
         setState(INITIAL_STATE);
@@ -334,6 +362,9 @@ export const CheckedStateProvider = ({ children }) => {
             setScenes,
             clearAllFavorites,
             syncStatus,
+            lastSyncError,
+            forceSync,
+            getSyncStats,
         }}>
             {children}
         </CheckedStateContext.Provider>
