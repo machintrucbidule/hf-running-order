@@ -7,7 +7,7 @@ import { INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '..
 // Import Logos
 import bandLogos from '../../data/bandLogos.json';
 
-const GroupCard = ({ group, position, onClose, onPositionChange }) => {
+const GroupCard = ({ group, position, onClose, onPositionChange, onOpenSpotify }) => {
     // ... existing content ...
     const cardRef = useRef(null);
     const positionRef = useRef(position);
@@ -469,6 +469,18 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                 <div className="header-top">
                     <h3>{group.GROUPE}</h3>
                     <div className="header-actions">
+                        {group.DEEZER && (
+                            <button
+                                className="music-play-btn"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onOpenSpotify(group);
+                                }}
+                                title="Écouter des extraits"
+                            >
+                                <i className="fa-solid fa-circle-play"></i>
+                            </button>
+                        )}
                         {/* Tag dropdown button */}
                         <div className="tag-dropdown-container" style={{ position: 'relative' }}>
                             <button

@@ -31,7 +31,7 @@ const PersonIcon3 = ({ color }) => (
     </svg>
 );
 
-const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes, dayEndMinutes, bandFilter }) => {
+const Band = ({ group, selectGroup, selectedGroupId, playerGroupId, onTagClick, dayStartMinutes, dayEndMinutes, bandFilter }) => {
     const { GROUPE, SCENE, DEBUT, FIN, id } = group;
     const { state, getBandTag, getInterestColor, cycleInterest } = useCheckedState();
     const { user } = useAuth();
@@ -82,6 +82,7 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
     }, [followedFriendsTags]);
 
     const isSelected = selectedGroupId === id;
+    const isNowPlaying = playerGroupId === id;
     const bandTag = getBandTag(id);
     const hasInterest = !!bandTag?.interest;
     const hasContext = !!bandTag?.context;
@@ -247,7 +248,7 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
     return (
         <div
             id={`group-${id}`}
-            className={`band-container ${sceneClass} band-${id} ${isSelected ? 'selected-group' : ''} ${isTagged ? 'compact-tagged' : ''}`}
+            className={`band-container ${sceneClass} band-${id} ${isSelected ? 'selected-group' : ''} ${isTagged ? 'compact-tagged' : ''} ${isNowPlaying ? 'now-playing' : ''}`}
             style={{
                 position: 'absolute',
                 top: getTop(),

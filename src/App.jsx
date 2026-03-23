@@ -13,6 +13,7 @@ import FilterBar from './components/layout/FilterBar';
 import DayView from './components/views/DayView';
 import WeeklyView from './components/views/WeeklyView';
 import GroupCard from './components/common/GroupCard';
+import MusicPlayer from './components/common/MusicPlayer';
 import './styles/App.css';
 
 import CustomEventModal from './components/modals/CustomEventModal';
@@ -30,6 +31,8 @@ function AppContent() {
   const [popoverPosition, setPopoverPosition] = useState(null);
   const groupCardRef = useRef(null);
   const [viewMode, setViewMode] = useState('day');
+  const [playerGroup, setPlayerGroup] = useState(null);
+  const [quickPlay, setQuickPlay] = useState(false);
 
   const [customEvents, setCustomEvents] = useState(() => {
     const saved = localStorage.getItem('customEvents');
@@ -226,6 +229,11 @@ function AppContent() {
   };
 
   const handleGroupSelect = (group, event) => {
+    // Quick play mode: clicking a band switches playback instead of opening popup
+    if (quickPlay && playerGroup && group && group.DEEZER) {
+      setPlayerGroup(group);
+      return;
+    }
     if (group) {
       setSelectedGroup(group);
 
@@ -260,10 +268,33 @@ function AppContent() {
     }
   };
 
+  const handleOpenPlayer = (group) => {
+    setPlayerGroup(group);
+    // Reposition GroupCard if it overlaps the player area
+    if (groupCardRef.current && popoverPosition && window.innerWidth > 600) {
+      requestAnimationFrame(() => {
+        const card = groupCardRef.current?.querySelector('.group-card');
+        if (!card) return;
+        const cardRect = card.getBoundingClientRect();
+        const playerHeight = 85; // two-row player height
+        const maxBottom = window.innerHeight - playerHeight - 15;
+        if (cardRect.bottom > maxBottom) {
+          const newY = popoverPosition.y - (cardRect.bottom - maxBottom);
+          setPopoverPosition(prev => ({ ...prev, y: Math.max(60, newY) }));
+        }
+      });
+    }
+  };
+  const handleClosePlayer = () => {
+    setPlayerGroup(null);
+    setQuickPlay(false);
+  };
+
   // Close group card when clicking outside
   useEffect(() => {
     if (!selectedGroup) return;
     const handleClickOutside = (e) => {
+      if (e.target.closest('.music-player')) return;
       if (groupCardRef.current && !groupCardRef.current.contains(e.target)) {
         // Check if clicked on a band — if so, handleGroupSelect will fire and replace the group
         const clickedBand = e.target.closest('.band-container');
@@ -283,7 +314,10 @@ function AppContent() {
   const currentDayGroups = groups.filter(group => group.DAY === state.day);
 
   return (
-    <div className={`App ${selectedGroup ? 'group-selected' : ''}`}>
+    <div
+      className={`App ${selectedGroup ? 'group-selected' : ''} ${playerGroup ? 'player-active' : ''}`}
+      style={{ '--music-player-height': playerGroup ? '85px' : '0px' }}
+    >
       <HeaderBar
         viewMode={viewMode}
         onViewChange={setViewMode}
@@ -349,6 +383,7 @@ function AppContent() {
                 groups={currentDayGroups}
                 selectGroup={handleGroupSelect}
                 selectedGroupId={selectedGroup?.id}
+                playerGroupId={playerGroup?.id}
                 day={state.day}
                 bandFilter={bandFilter}
                 customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}
@@ -366,6 +401,15 @@ function AppContent() {
           } />
         </Routes>
       </main>
+
+      {playerGroup && (
+        <MusicPlayer
+          group={playerGroup}
+          onClose={handleClosePlayer}
+          quickPlay={quickPlay}
+          onToggleQuickPlay={() => setQuickPlay(prev => !prev)}
+        />
+      )}
 
       <CustomEventModal
         isOpen={isCustomModalOpen}
@@ -398,6 +442,7 @@ function AppContent() {
             onClose={() => setSelectedGroup(null)}
             position={popoverPosition}
             onPositionChange={handleCardPositionChange}
+            onOpenSpotify={handleOpenPlayer}
           />
         </div>
       )}
