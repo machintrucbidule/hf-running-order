@@ -241,7 +241,7 @@ function AppContent() {
     if (group) {
       setSelectedGroup(group);
 
-      if (!selectedGroup && event) {
+      if (event) {
         let x = event.clientX + 20;
         let y = event.clientY;
 
@@ -261,9 +261,18 @@ function AppContent() {
         setTimeout(() => {
           const element = document.getElementById(`group-${group.id}`);
           if (element) {
-            element.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            const scrollContainer = element.closest('.content') || document.scrollingElement;
+            const cardHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--group-card-height')) || 420;
+            const headerHeight = 60;
+            const visibleHeight = window.innerHeight - cardHeight - headerHeight;
+            const elementRect = element.getBoundingClientRect();
+            // Scroll so the group is in the visible area above the card
+            if (elementRect.top < headerHeight || elementRect.bottom > window.innerHeight - cardHeight) {
+              const targetY = elementRect.top + window.scrollY - headerHeight - Math.max(0, (visibleHeight - elementRect.height) / 2);
+              window.scrollTo({ top: targetY, behavior: 'smooth' });
+            }
           }
-        }, 350);
+        }, 400);
       }
 
     } else {
@@ -350,6 +359,7 @@ function AppContent() {
         }}
         onRefreshLineup={refreshLineup}
         lineupRefreshing={lineupRefreshing}
+        groups={groups}
       />
 
       {isGuestMode && (

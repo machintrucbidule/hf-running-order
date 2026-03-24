@@ -322,6 +322,7 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
                                     style={line1Overflow ? { '--marquee-offset': `${line1Offset}px` } : undefined}
                                 >
                                     <span className="music-player-track">{currentTrack.title_short || currentTrack.title}</span>
+                                    <span className="music-player-separator">·</span>
                                     <span className="music-player-artist">{group.GROUPE}</span>
                                 </span>
                             </div>

@@ -11,9 +11,10 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 import { useAuth } from '../../context/AuthContext';
 import StatsPanel from '../panels/StatsPanel';
 import HelpPanel from '../panels/HelpPanel';
+import SearchPanel from '../panels/SearchPanel';
 
-const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact, isGuestMode, guestName, onExitGuestMode, onClearCustomEvents, onGroupClick, playerActive, quickPlay, onTogglePlayer, filterOpen, onFilterClose, onRefreshLineup, lineupRefreshing }) => {
-    const { userState, syncStatus } = useCheckedState();
+const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact, isGuestMode, guestName, onExitGuestMode, onClearCustomEvents, onGroupClick, playerActive, quickPlay, onTogglePlayer, filterOpen, onFilterClose, onRefreshLineup, lineupRefreshing, groups }) => {
+    const { userState, syncStatus, setDay } = useCheckedState();
     const { user } = useAuth();
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -24,6 +25,7 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
     const [accountOpen, setAccountOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [helpOpen, setHelpOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     React.useEffect(() => {
@@ -190,6 +192,17 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                         <i className="fa-solid fa-headphones"></i>
                     </button>
 
+                    <button
+                        className={`toolbar-btn ${searchOpen ? 'active' : ''}`}
+                        title="Rechercher un groupe"
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            setSearchOpen(true);
+                        }}
+                    >
+                        <i className="fa-solid fa-magnifying-glass"></i>
+                    </button>
+
                     {/* Vue semaine désactivée temporairement
                     <button
                         className={`toolbar-btn ${viewMode === 'week' ? 'active' : ''}`}
@@ -280,6 +293,40 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
             <HelpPanel
                 isOpen={helpOpen}
                 onClose={() => setHelpOpen(false)}
+            />
+
+            <SearchPanel
+                isOpen={searchOpen}
+                onClose={() => setSearchOpen(false)}
+                groups={groups}
+                onGroupClick={(group) => {
+                    setSearchOpen(false);
+                    if (group.DAY) setDay(group.DAY);
+                    // Wait for day change to render, then position card next to the band element
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            const bandEl = document.getElementById(`group-${group.id}`);
+                            const vw = window.innerWidth;
+                            if (bandEl && vw > 600) {
+                                // Desktop: place card to the right of the band, or to the left if no space
+                                const rect = bandEl.getBoundingClientRect();
+                                const cardWidth = 350;
+                                let x, y;
+                                if (rect.right + cardWidth + 30 < vw) {
+                                    x = rect.right + 10;
+                                } else {
+                                    x = rect.left - cardWidth - 10;
+                                }
+                                y = Math.max(60, Math.min(rect.top, window.innerHeight - 420));
+                                if (onGroupClick) onGroupClick(group, { clientX: x, clientY: y });
+                                bandEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                            } else {
+                                // Mobile: just open the card, App.jsx handles scroll to band element
+                                if (onGroupClick) onGroupClick(group, { clientX: vw / 2, clientY: 80 });
+                            }
+                        }, 100);
+                    });
+                }}
             />
 
             <ProfileModal

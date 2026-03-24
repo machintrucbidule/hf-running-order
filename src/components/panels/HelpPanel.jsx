@@ -98,6 +98,15 @@ const HelpPanel = ({ isOpen, onClose }) => {
                         </div>
 
                         <div className="help-block">
+                            <h4><Icon icon="fa-solid fa-magnifying-glass" /> Rechercher un groupe</h4>
+                            <p>
+                                Clique sur <Icon icon="fa-solid fa-magnifying-glass" /> dans le header pour ouvrir la recherche.
+                                Tape le nom d'un groupe pour le retrouver rapidement dans le lineup.
+                                L'appli bascule automatiquement sur le bon jour et te montre le groupe sur la grille.
+                            </p>
+                        </div>
+
+                        <div className="help-block">
                             <h4><Icon icon="fa-solid fa-arrow-down-up-across-line" /> Inverser l'ordre</h4>
                             <p>
                                 Par défaut, le soir est en haut de la grille. Tu peux inverser (matin en haut)
@@ -119,6 +128,10 @@ const HelpPanel = ({ isOpen, onClose }) => {
                             <p>
                                 Clique sur un groupe dans la grille pour ouvrir sa fiche.
                                 Tu y trouveras son style, son pays d'origine, sa bio, et ses participations passées au Hellfest.
+                            </p>
+                            <p>
+                                Tu peux aussi utiliser la <strong>recherche</strong> <Icon icon="fa-solid fa-magnifying-glass" /> pour
+                                trouver un groupe par son nom et ouvrir directement sa fiche.
                             </p>
                         </div>
 
@@ -187,11 +200,12 @@ const HelpPanel = ({ isOpen, onClose }) => {
 
                         <div className="help-block">
                             <h4>Comment taguer ?</h4>
-                            <p>4 façons de faire :</p>
+                            <p>Plusieurs façons de faire :</p>
                             <ul className="help-list">
                                 <li><strong>Clic sur un groupe</strong> → bouton <Icon icon="fa-solid fa-star" style={{ color: '#FFD700' }} /> dans le header de la popup</li>
                                 <li><strong>Clic droit</strong> sur un groupe → menu de tag rapide</li>
                                 <li><strong>Double-clic</strong> → cycle rapide entre les niveaux</li>
+                                <li><strong>Depuis la recherche</strong> <Icon icon="fa-solid fa-magnifying-glass" /> → bouton <Icon icon="fa-solid fa-star" style={{ color: '#FFD700' }} /> à côté de chaque résultat</li>
                                 <li><strong>Depuis le player</strong> → bouton <Icon icon="fa-solid fa-star" style={{ color: '#FFD700' }} /> pour taguer en écoutant</li>
                             </ul>
                         </div>
