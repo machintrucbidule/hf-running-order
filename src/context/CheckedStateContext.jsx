@@ -152,7 +152,7 @@ export const CheckedStateProvider = ({ children }) => {
                         setState(migrateInterestColors(mergeWithInitialState(remoteMigrated)));
                     }
                 }
-                setSyncStatus('synced');
+                setSyncStatus(result.fromCache ? 'cached' : 'synced');
             } catch (err) {
                 console.error('Sync failed:', err);
                 setSyncStatus('error');

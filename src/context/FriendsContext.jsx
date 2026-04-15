@@ -17,9 +17,11 @@ const FriendsContext = createContext();
 const CACHE_KEY_VISIBLE = 'friends_visibleCircleIds';
 const CACHE_KEY_MEMBERS_MAP = 'friends_circleMembersMap';
 const CACHE_KEY_MEMBER = 'friends_memberCircleId';
+const CACHE_KEY_UID = 'friends_cacheUid';
+const CACHE_KEY_TIMESTAMP = 'friends_cacheTimestamp';
 
 export const FriendsProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { userState } = useCheckedState();
 
   const [circles, setCircles] = useState([]);
@@ -63,6 +65,8 @@ export const FriendsProvider = ({ children }) => {
       localStorage.setItem(CACHE_KEY_MEMBERS_MAP,
         JSON.stringify(Object.fromEntries(circleMembersMap))
       );
+      localStorage.setItem(CACHE_KEY_TIMESTAMP, String(Date.now()));
+      if (user) localStorage.setItem(CACHE_KEY_UID, user.uid);
     }
   }, [circleMembersMap]);
 
@@ -112,16 +116,34 @@ export const FriendsProvider = ({ children }) => {
 
   // Fetch user's circles on login, auto-activate all on first load
   useEffect(() => {
+    if (authLoading) return; // Auth still restoring session — keep cached state intact
     if (!user) {
       setCircles([]);
       setVisibleCircleIds(new Set());
       setCircleMembersMap(new Map());
       setMemberCircleIdState(null); // Clear state but NOT localStorage
       hasResolvedMemberRef.current = false;
-      localStorage.removeItem(CACHE_KEY_VISIBLE);
-      localStorage.removeItem(CACHE_KEY_MEMBERS_MAP);
+      // localStorage intentionally NOT cleared — preserved for next login
       return;
     }
+    // Invalidate cache if it belongs to a different user
+    const cachedUid = localStorage.getItem(CACHE_KEY_UID);
+    if (cachedUid && cachedUid !== user.uid) {
+      localStorage.removeItem(CACHE_KEY_VISIBLE);
+      localStorage.removeItem(CACHE_KEY_MEMBERS_MAP);
+      localStorage.removeItem(CACHE_KEY_TIMESTAMP);
+      localStorage.removeItem(CACHE_KEY_MEMBER);
+    }
+    localStorage.setItem(CACHE_KEY_UID, user.uid);
+
+    // Restore cached data immediately (before Firebase fetch)
+    try {
+      const cachedVisible = localStorage.getItem(CACHE_KEY_VISIBLE);
+      if (cachedVisible) setVisibleCircleIds(new Set(JSON.parse(cachedVisible)));
+      const cachedMembers = localStorage.getItem(CACHE_KEY_MEMBERS_MAP);
+      if (cachedMembers) setCircleMembersMap(new Map(Object.entries(JSON.parse(cachedMembers))));
+    } catch { /* corrupted cache, proceed without it */ }
+
     setLoadingCircles(true);
     fetchUserCircles(user.uid)
       .then(c => {
@@ -154,7 +176,7 @@ export const FriendsProvider = ({ children }) => {
       })
       .catch(err => console.error('Failed to fetch circles:', err))
       .finally(() => setLoadingCircles(false));
-  }, [user]);
+  }, [user, authLoading]);
 
   // Manage Firestore subscriptions for visible circles
   useEffect(() => {

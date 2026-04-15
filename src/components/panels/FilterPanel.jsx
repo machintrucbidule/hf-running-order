@@ -80,6 +80,27 @@ const FilterPanel = ({ isOpen, onClose }) => {
 
                 <div className="filter-section">
 
+                    {/* Toggle Inverser l'ordre */}
+                    <div style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                        <label className="settings-option">
+                            <div className="settings-option-info">
+                                <i className="fa-solid fa-arrow-down-up-across-line"></i>
+                                <div>
+                                    <span className="settings-option-title">Inverser l'ordre</span>
+                                    <span className="settings-option-desc">Matin en haut, soir en bas</span>
+                                </div>
+                            </div>
+                            <div className="toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    checked={state.reverse || false}
+                                    onChange={() => setState(prev => ({ ...prev, reverse: !prev.reverse }))}
+                                />
+                                <span className="toggle-slider"></span>
+                            </div>
+                        </label>
+                    </div>
+
                     {/* Toggle global Scènes Annexes */}
                     <div style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                         <label className="settings-option">

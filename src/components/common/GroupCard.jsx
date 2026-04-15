@@ -12,16 +12,17 @@ const GroupCard = ({ group, position, onClose, onPositionChange, onOpenSpotify }
     const cardRef = useRef(null);
     const positionRef = useRef(position);
     const { state, setInterest, setContext, getBandTag, getInterestColor, updateNote } = useCheckedState();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const { visibleCircleIds, circleMembersGrouped } = useFriends();
 
     // Friends who tagged this band, grouped by circle
     const friendsByCircle = useMemo(() => {
-        if (visibleCircleIds.size === 0 || !user) return [];
+        if (visibleCircleIds.size === 0 || (!user && !authLoading)) return [];
+        const uid = user?.uid || localStorage.getItem('friends_cacheUid');
         const result = [];
         for (const [circleId, circleData] of Object.entries(circleMembersGrouped)) {
             const taggers = circleData.members
-                .filter(m => m.id !== user.uid)
+                .filter(m => !uid || m.id !== uid)
                 .filter(m => m.taggedBands?.[group.id]?.interest)
                 .map(m => ({
                     name: (m.displayName || 'Anonyme').replace(/\s*\(.*?\)\s*/g, '').trim(),
@@ -33,7 +34,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange, onOpenSpotify }
             }
         }
         return result;
-    }, [visibleCircleIds, circleMembersGrouped, group.id, user]);
+    }, [visibleCircleIds, circleMembersGrouped, group.id, user, authLoading]);
     // ...
 
     // Helper to get logo safely (case insensitive?)
@@ -338,8 +339,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange, onOpenSpotify }
                                 marginBottom: '10px',
                                 display: 'flex',
                                 justifyContent: 'center',
-                                backgroundColor: 'black',
-                                // removed background and padding
+                                backgroundColor: '#1E1E1E',
                             }}>
                                 <img
                                     src={`${import.meta.env.BASE_URL}${bandLogos[group.GROUPE]}`}
@@ -347,7 +347,8 @@ const GroupCard = ({ group, position, onClose, onPositionChange, onOpenSpotify }
                                     style={{
                                         maxWidth: '100%',
                                         maxHeight: '80px',
-                                        objectFit: 'contain'
+                                        objectFit: 'contain',
+                                        mixBlendMode: 'lighten'
                                     }}
                                 />
                             </div>

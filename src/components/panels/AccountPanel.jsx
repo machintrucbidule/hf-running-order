@@ -40,7 +40,14 @@ const AccountPanel = ({ isOpen, onClose }) => {
                             Connectez-vous pour synchroniser vos données entre vos appareils et accéder aux cercles d'amis.
                         </p>
                         <button
-                            onClick={loginWithGoogle}
+                            onClick={async () => {
+                                try {
+                                    await loginWithGoogle();
+                                    onClose();
+                                } catch (e) {
+                                    // login failed or cancelled — stay on panel
+                                }
+                            }}
                             style={{
                                 ...primaryBtnStyle,
                                 display: 'flex',
@@ -92,8 +99,8 @@ const AccountPanel = ({ isOpen, onClose }) => {
         onClose();
     };
 
-    const syncColor = syncStatus === 'synced' ? '#4CAF50' : syncStatus === 'error' ? '#e74c3c' : syncStatus === 'syncing' ? '#FFD700' : '#888';
-    const syncLabel = syncStatus === 'synced' ? 'Synchronisé' : syncStatus === 'error' ? 'Erreur' : syncStatus === 'syncing' ? 'Synchronisation...' : 'Inactif';
+    const syncColor = syncStatus === 'synced' ? '#4CAF50' : syncStatus === 'cached' ? '#FF9800' : syncStatus === 'error' ? '#e74c3c' : syncStatus === 'syncing' ? '#FFD700' : '#888';
+    const syncLabel = syncStatus === 'synced' ? 'Synchronisé' : syncStatus === 'cached' ? 'Hors-ligne (cache)' : syncStatus === 'error' ? 'Erreur' : syncStatus === 'syncing' ? 'Synchronisation...' : 'Inactif';
 
     return (
         <div style={overlayStyle} onClick={onClose}>

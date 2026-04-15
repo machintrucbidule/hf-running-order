@@ -28,10 +28,11 @@ export const getUserDocRef = (userId) => doc(db, 'users', userId);
 export const fetchUserData = async (userId) => {
   syncStats.requestCount++;
   const docSnap = await getDoc(getUserDocRef(userId));
+  const fromCache = docSnap.metadata.fromCache;
   if (docSnap.exists()) {
-    return { exists: true, data: docSnap.data() };
+    return { exists: true, data: docSnap.data(), fromCache };
   }
-  return { exists: false, data: null };
+  return { exists: false, data: null, fromCache };
 };
 
 // Callback for sync status updates (set by context)

@@ -86,6 +86,27 @@ const HelpPanel = ({ isOpen, onClose }) => {
                         </div>
 
                         <div className="help-block">
+                            <h4><Icon icon="fa-solid fa-filter" /> Filtrer les groupes</h4>
+                            <p>La barre de filtres te permet d'afficher :</p>
+                            <ul className="help-list">
+                                <li>
+                                    <Icon icon="fa-solid fa-music" /> <strong>Tous les groupes</strong> — vue complète
+                                </li>
+                                <li>
+                                    <Icon icon="fa-solid fa-heart" /> <strong>Mes groupes</strong> — uniquement ceux que tu as tagués
+                                </li>
+                                <li>
+                                    <Icon icon="fa-solid fa-user-group" /> <strong>Mon cercle</strong> — les groupes tagués par ton cercle membre
+                                    <span className="help-note">Visible uniquement si tu es dans un cercle</span>
+                                </li>
+                                <li>
+                                    <Icon icon="fa-solid fa-users" /> <strong>Mes cercles</strong> — les groupes tagués par tous tes cercles visibles
+                                    <span className="help-note">Visible uniquement si tu es dans un cercle</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div className="help-block">
                             <h4><Icon icon="fa-solid fa-tent" /> Filtrer les scènes</h4>
                             <p>
                                 Appuie sur le bouton <strong><Icon icon="fa-solid fa-tent" /> Scènes</strong> dans la barre de filtres
@@ -98,6 +119,14 @@ const HelpPanel = ({ isOpen, onClose }) => {
                         </div>
 
                         <div className="help-block">
+                            <h4><Icon icon="fa-solid fa-arrow-down-up-across-line" /> Inverser l'ordre</h4>
+                            <p>
+                                Par défaut, le soir est en haut de la grille. Tu peux inverser (matin en haut)
+                                via le toggle en haut du panneau <strong><Icon icon="fa-solid fa-tent" /> Scènes</strong>.
+                            </p>
+                        </div>
+
+                        <div className="help-block">
                             <h4><Icon icon="fa-solid fa-magnifying-glass" /> Rechercher un groupe</h4>
                             <p>
                                 Clique sur <Icon icon="fa-solid fa-magnifying-glass" /> dans le header pour ouvrir la recherche.
@@ -106,13 +135,6 @@ const HelpPanel = ({ isOpen, onClose }) => {
                             </p>
                         </div>
 
-                        <div className="help-block">
-                            <h4><Icon icon="fa-solid fa-arrow-down-up-across-line" /> Inverser l'ordre</h4>
-                            <p>
-                                Par défaut, le soir est en haut de la grille. Tu peux inverser (matin en haut)
-                                dans <strong><Icon icon="fa-solid fa-gear" /> Paramètres &gt; Affichage</strong>.
-                            </p>
-                        </div>
                     </AccordionSection>
 
                     {/* 2. Découvrir les groupes */}
@@ -183,22 +205,6 @@ const HelpPanel = ({ isOpen, onClose }) => {
                         </div>
 
                         <div className="help-block">
-                            <h4>Contextes (optionnels)</h4>
-                            <p>En plus de l'intérêt, tu peux ajouter un contexte :</p>
-                            <ul className="help-list">
-                                <li>
-                                    <Icon icon="fa-solid fa-user-group" /> <strong>Avec Potes</strong> — on y va pour accompagner
-                                </li>
-                                <li>
-                                    <Icon icon="fa-solid fa-chess" /> <strong>Stratégique</strong> — positionnement, pause
-                                </li>
-                                <li>
-                                    <Icon icon="fa-solid fa-ban" /> <strong>Au Bar</strong> — on passe son tour
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div className="help-block">
                             <h4>Comment taguer ?</h4>
                             <p>Plusieurs façons de faire :</p>
                             <ul className="help-list">
@@ -207,27 +213,6 @@ const HelpPanel = ({ isOpen, onClose }) => {
                                 <li><strong>Double-clic</strong> → cycle rapide entre les niveaux</li>
                                 <li><strong>Depuis la recherche</strong> <Icon icon="fa-solid fa-magnifying-glass" /> → bouton <Icon icon="fa-solid fa-star" style={{ color: '#FFD700' }} /> à côté de chaque résultat</li>
                                 <li><strong>Depuis le player</strong> → bouton <Icon icon="fa-solid fa-star" style={{ color: '#FFD700' }} /> pour taguer en écoutant</li>
-                            </ul>
-                        </div>
-
-                        <div className="help-block">
-                            <h4><Icon icon="fa-solid fa-filter" /> Filtrer les groupes</h4>
-                            <p>La barre de filtres te permet d'afficher :</p>
-                            <ul className="help-list">
-                                <li>
-                                    <Icon icon="fa-solid fa-music" /> <strong>Tous les groupes</strong> — vue complète
-                                </li>
-                                <li>
-                                    <Icon icon="fa-solid fa-heart" /> <strong>Mes groupes</strong> — uniquement ceux que tu as tagués
-                                </li>
-                                <li>
-                                    <Icon icon="fa-solid fa-user-group" /> <strong>Mon cercle</strong> — les groupes tagués par ton cercle membre
-                                    <span className="help-note">Visible uniquement si tu es dans un cercle</span>
-                                </li>
-                                <li>
-                                    <Icon icon="fa-solid fa-users" /> <strong>Mes cercles</strong> — les groupes tagués par tous tes cercles visibles
-                                    <span className="help-note">Visible uniquement si tu es dans un cercle</span>
-                                </li>
                             </ul>
                         </div>
 
@@ -305,7 +290,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
                     {/* 5. Les cercles d'amis */}
                     <AccordionSection
                         title="Les cercles d'amis"
-                        icon="fa-solid fa-user-group"
+                        icon="fa-solid fa-people-group"
                         color="#FFD700"
                         isOpen={openSection === 4}
                         onToggle={() => toggle(4)}
@@ -317,7 +302,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
                                 Quand tes potes taguent des groupes, tu peux voir leurs choix directement sur la grille.
                             </p>
                             <p>
-                                Pour accéder aux cercles, connecte-toi puis clique sur <Icon icon="fa-solid fa-user-group" /> dans le header.
+                                Pour accéder aux cercles, connecte-toi puis clique sur <Icon icon="fa-solid fa-people-group" /> dans le header.
                             </p>
                         </div>
 
@@ -410,13 +395,83 @@ const HelpPanel = ({ isOpen, onClose }) => {
                         </div>
                     </AccordionSection>
 
-                    {/* 6. Le lecteur audio */}
+                    {/* 6. Installer l'application */}
+                    <AccordionSection
+                        title="Installer l'application"
+                        icon="fa-solid fa-mobile-screen"
+                        color="#34C759"
+                        isOpen={openSection === 5}
+                        onToggle={() => toggle(5)}
+                    >
+                        <div className="help-block">
+                            <h4><Icon icon="fa-solid fa-download" /> C'est quoi ?</h4>
+                            <p>
+                                Cette appli est une <strong>PWA</strong> (Progressive Web App) : tu peux l'installer
+                                sur ton téléphone comme une vraie application, avec une icône sur ton écran d'accueil.
+                            </p>
+                            <p>
+                                L'appli se lance en plein écran (sans la barre d'adresse du navigateur),
+                                fonctionne <strong>hors-ligne</strong> une fois installée, et se met à jour automatiquement
+                                quand tu es connecté à internet.
+                            </p>
+                        </div>
+
+                        <div className="help-block">
+                            <h4><Icon icon="fa-brands fa-android" style={{ color: '#3DDC84' }} /> Sur Android (Chrome)</h4>
+                            <ol className="help-list">
+                                <li>Ouvre l'appli dans <strong>Chrome</strong></li>
+                                <li>Appuie sur le menu <strong>⋮</strong> (trois points) en haut à droite</li>
+                                <li>Choisis <strong>"Installer l'application"</strong> ou <strong>"Ajouter à l'écran d'accueil"</strong></li>
+                                <li>Confirme — l'icône apparaît sur ton écran d'accueil</li>
+                            </ol>
+                            <p className="help-note" style={{ display: 'block', marginTop: '6px' }}>
+                                Chrome peut aussi te proposer l'installation automatiquement via une bannière en bas de l'écran.
+                            </p>
+                        </div>
+
+                        <div className="help-block">
+                            <h4><Icon icon="fa-brands fa-apple" /> Sur iPhone / iPad (Safari)</h4>
+                            <ol className="help-list">
+                                <li>Ouvre l'appli dans <strong>Safari</strong> (obligatoire, ça ne marche pas avec Chrome sur iOS)</li>
+                                <li>Appuie sur le bouton <strong>Partager</strong> <Icon icon="fa-solid fa-arrow-up-from-bracket" /> (en bas de l'écran)</li>
+                                <li>Fais défiler et choisis <strong>"Sur l'écran d'accueil"</strong></li>
+                                <li>Confirme en appuyant sur <strong>"Ajouter"</strong></li>
+                            </ol>
+                        </div>
+
+                        <div className="help-block">
+                            <h4><Icon icon="fa-solid fa-arrows-rotate" /> Mises à jour</h4>
+                            <p>
+                                L'appli se met à jour <strong>automatiquement</strong> en arrière-plan quand tu l'ouvres
+                                et que tu as une connexion internet. La prochaine fois que tu la relances, tu as la dernière version.
+                            </p>
+                            <p>
+                                Si tu veux <strong>forcer la mise à jour</strong> immédiatement :
+                            </p>
+                            <ul className="help-list">
+                                <li>Va dans <strong><Icon icon="fa-solid fa-gear" /> Paramètres</strong> (menu <Icon icon="fa-solid fa-bars" />)</li>
+                                <li>Section <strong>Maintenance</strong> → <strong>"Vider le cache et recharger l'application"</strong></li>
+                                <li>L'appli se recharge avec la dernière version. Tes données (tags, cercles) sont conservées.</li>
+                            </ul>
+                        </div>
+
+                        <div className="help-block">
+                            <h4><Icon icon="fa-solid fa-wifi" /> Mode hors-ligne</h4>
+                            <p>
+                                Une fois installée, l'appli fonctionne <strong>sans internet</strong> : tu peux consulter
+                                le running order et tes tags même en plein festival sans réseau.
+                                La synchronisation des tags avec ton compte reprendra automatiquement dès que tu retrouves du réseau.
+                            </p>
+                        </div>
+                    </AccordionSection>
+
+                    {/* 7. Le lecteur audio */}
                     <AccordionSection
                         title="Le lecteur audio"
                         icon="fa-solid fa-headphones"
                         color="#D13440"
-                        isOpen={openSection === 5}
-                        onToggle={() => toggle(5)}
+                        isOpen={openSection === 6}
+                        onToggle={() => toggle(6)}
                     >
                         <div className="help-block">
                             <h4>Lancer le lecteur</h4>
@@ -478,8 +533,8 @@ const HelpPanel = ({ isOpen, onClose }) => {
                         title="Menu et paramètres"
                         icon="fa-solid fa-bars"
                         color="#aaa"
-                        isOpen={openSection === 6}
-                        onToggle={() => toggle(6)}
+                        isOpen={openSection === 7}
+                        onToggle={() => toggle(7)}
                     >
                         <div className="help-block">
                             <h4><Icon icon="fa-solid fa-bars" /> Menu principal</h4>
@@ -487,7 +542,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
                                 Le menu s'ouvre via le bouton <Icon icon="fa-solid fa-bars" /> en haut à droite. Tu y trouveras :
                             </p>
                             <ul className="help-list">
-                                <li><Icon icon="fa-solid fa-gear" style={{ color: '#aaa' }} /> <strong>Paramètres</strong> — couleurs, affichage, données du lineup, maintenance</li>
+                                <li><Icon icon="fa-solid fa-gear" style={{ color: '#aaa' }} /> <strong>Paramètres</strong> — couleurs des favoris, données du lineup, maintenance</li>
                                 <li><Icon icon="fa-solid fa-chart-pie" style={{ color: '#FFD700' }} /> <strong>Stats</strong> — pourcentage de groupes tagués, répartition par genre et par scène</li>
                                 <li><Icon icon="fa-solid fa-music" style={{ color: '#1DB954' }} /> <strong>Playlists</strong> — liens vers les playlists officielles du Hellfest (Spotify, Deezer, Apple Music, YouTube Music)</li>
                                 <li><Icon icon="fa-solid fa-heart" style={{ color: '#ff6b6b' }} /> <strong>Crédits</strong></li>
@@ -498,7 +553,6 @@ const HelpPanel = ({ isOpen, onClose }) => {
                             <h4><Icon icon="fa-solid fa-gear" /> Paramètres</h4>
                             <ul className="help-list">
                                 <li><strong>Couleurs des favoris</strong> — personnalise la couleur de chaque niveau d'intérêt</li>
-                                <li><strong>Affichage</strong> — inverse l'ordre de la grille (matin en haut / soir en haut)</li>
                                 <li><strong>Forcer la mise à jour du lineup</strong> — recharge les données depuis la source en ligne</li>
                                 <li><strong>Vider le cache</strong> — supprime les fichiers en cache du navigateur et recharge l'appli. Tes données sont conservées.</li>
                             </ul>
@@ -512,6 +566,7 @@ const HelpPanel = ({ isOpen, onClose }) => {
                             </p>
                         </div>
                     </AccordionSection>
+
                 </div>
             </div>
         </div>

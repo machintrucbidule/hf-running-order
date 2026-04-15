@@ -3,10 +3,13 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '../../constants';
 import bandLogos from '../../data/bandLogos.json';
 
-function extractDeezerArtistId(url) {
+function extractDeezerInfo(url) {
     if (!url) return null;
-    const match = url.match(/artist\/(\d+)/);
-    return match ? match[1] : null;
+    const artistMatch = url.match(/artist\/(\d+)/);
+    if (artistMatch) return { type: 'artist', id: artistMatch[1] };
+    const albumMatch = url.match(/album\/(\d+)/);
+    if (albumMatch) return { type: 'album', id: albumMatch[1] };
+    return null;
 }
 
 function formatDuration(seconds) {
@@ -17,7 +20,7 @@ function formatDuration(seconds) {
 
 const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
     const isEmptyPlayer = !group || group._empty;
-    const artistId = isEmptyPlayer ? null : extractDeezerArtistId(group.DEEZER);
+    const deezerInfo = isEmptyPlayer ? null : extractDeezerInfo(group.DEEZER);
     const audioRef = useRef(null);
     const playerRef = useRef(null);
     const line1Ref = useRef(null);
@@ -73,7 +76,7 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
 
     // Fetch top tracks from Deezer API
     useEffect(() => {
-        if (!artistId) return;
+        if (!deezerInfo) return;
         setLoading(true);
         setError(null);
         setTracks([]);
@@ -81,9 +84,13 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
         setProgress(0);
         setIsPlaying(false);
 
+        const apiUrl = deezerInfo.type === 'album'
+            ? `https://api.deezer.com/album/${deezerInfo.id}/tracks?limit=50`
+            : `https://api.deezer.com/artist/${deezerInfo.id}/top?limit=10`;
+
         // Try fetch first, fallback to JSONP if CORS blocked
         const controller = new AbortController();
-        fetch(`https://api.deezer.com/artist/${artistId}/top?limit=10`, { signal: controller.signal })
+        fetch(apiUrl, { signal: controller.signal })
             .then(res => res.json())
             .then(data => {
                 const validTracks = (data.data || []).filter(t => t.preview);
@@ -99,7 +106,7 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
                 // CORS blocked — fallback to JSONP
                 const cbName = `dz_cb_${Date.now()}`;
                 const script = document.createElement('script');
-                script.src = `https://api.deezer.com/artist/${artistId}/top?limit=10&output=jsonp&callback=${cbName}`;
+                script.src = `${apiUrl}${apiUrl.includes('?') ? '&' : '?'}output=jsonp&callback=${cbName}`;
                 window[cbName] = (data) => {
                     const validTracks = (data.data || []).filter(t => t.preview);
                     if (validTracks.length === 0) {
@@ -121,7 +128,7 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
             });
 
         return () => controller.abort();
-    }, [artistId]);
+    }, [deezerInfo?.type, deezerInfo?.id]);
 
     // Sync volume to audio element
     useEffect(() => {
@@ -152,7 +159,7 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
         };
         audio.addEventListener('timeupdate', handleTimeUpdate);
         return () => audio.removeEventListener('timeupdate', handleTimeUpdate);
-    }, [artistId]);
+    }, [deezerInfo]);
 
     // Detect overflow for marquee on mobile info lines
     useEffect(() => {
@@ -181,7 +188,7 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
         checkOverflow();
         window.addEventListener('resize', checkOverflow);
         return () => window.removeEventListener('resize', checkOverflow);
-    }, [currentIndex, tracks, artistId]);
+    }, [currentIndex, tracks, deezerInfo]);
 
     // Auto-next on track end
     useEffect(() => {
@@ -254,7 +261,7 @@ const MusicPlayer = ({ group, onClose, quickPlay, onToggleQuickPlay }) => {
     const logoPath = !isEmptyPlayer ? bandLogos[group.GROUPE] : null;
 
     // Empty player state (opened from toolbar, no artist yet)
-    if (!artistId) {
+    if (!deezerInfo) {
         return (
             <div className="music-player" ref={playerRef}>
                 <div className="music-player-progress-container">

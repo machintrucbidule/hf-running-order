@@ -18,14 +18,6 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onRefreshLineup, 
 
     const canUseExtendedView = windowWidth >= 1200;
 
-    const toggleCompact = () => {
-        setState(prev => ({ ...prev, compact: !prev.compact }));
-    };
-
-    const toggleReverse = () => {
-        setState(prev => ({ ...prev, reverse: !prev.reverse }));
-    };
-
     const handleLanguageChange = (lang) => {
         setState(prev => ({ ...prev, language: lang }));
     };
@@ -47,29 +39,19 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onRefreshLineup, 
 
     return (
         <div className="panel-overlay" onClick={onClose}>
-            <div className="settings-panel" onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
-                <div className="panel-header">
-                    <h2 style={{ fontFamily: 'Metal Mania', letterSpacing: '2px' }}>
-                        <i className="fa-solid fa-gear"></i>
-                        Paramètres
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            position: 'absolute',
-                            top: '15px',
-                            right: '15px',
-                            background: 'transparent',
-                            border: 'none',
-                            color: '#666',
-                            fontSize: '1.2rem',
-                            cursor: 'pointer',
-                            padding: '5px'
-                        }}
-                    >
-                        <i className="fa-solid fa-xmark"></i>
-                    </button>
+            <div className="settings-panel" onClick={(e) => e.stopPropagation()}>
+                <div className="settings-panel-header">
+                    <div className="settings-panel-header-content">
+                        <h2>
+                            <i className="fa-solid fa-gear" style={{ color: '#1DB954' }}></i>
+                            Paramètres
+                        </h2>
+                        <button className="help-close-btn" onClick={onClose}>
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
                 </div>
+                <div className="settings-panel-body">
 
                 {/* Section Couleurs des favoris */}
                 <div className="settings-section">
@@ -109,33 +91,6 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onRefreshLineup, 
                             );
                         })}
                     </div>
-                </div>
-
-                {/* Section Affichage */}
-                <div className="settings-section">
-                    <h3>Affichage</h3>
-
-                    <label className="settings-option">
-                        <div className="settings-option-info">
-                            <i className="fa-solid fa-arrow-down-up-across-line"></i>
-                            <div>
-                                <span className="settings-option-title">Inverser l'ordre</span>
-                                <span className="settings-option-desc">Matin en haut, soir en bas</span>
-                            </div>
-                        </div>
-                        <div className="toggle-switch">
-                            <input
-                                type="checkbox"
-                                checked={state.reverse || false}
-                                onChange={toggleReverse}
-                            />
-                            <span className="toggle-slider"></span>
-                        </div>
-                    </label>
-
-                    {/* (Option Vue étendue déplacée dans DayView) */}
-
-
                 </div>
 
                 {/* Données du lineup */}
@@ -269,6 +224,7 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onRefreshLineup, 
                             Action irréversible : Efface tous les favoris et les créneaux personnalisés.
                         </p>
                     )}
+                </div>
                 </div>
             </div>
         </div>

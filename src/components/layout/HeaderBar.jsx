@@ -143,7 +143,7 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                                     setFriendsOpen(true);
                                 }}
                             >
-                                <i className="fa-solid fa-user-group"></i>
+                                <i className="fa-solid fa-people-group"></i>
                             </button>
                         )}
                     </div>

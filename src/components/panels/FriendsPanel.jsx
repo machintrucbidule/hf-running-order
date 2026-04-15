@@ -243,6 +243,13 @@ const FriendsPanel = ({ isOpen, onClose }) => {
                                             </div>
                                             <div style={{ display: 'flex', gap: '6px' }}>
                                                 <button
+                                                    onClick={() => handleViewMembers(circle)}
+                                                    title="Voir les membres"
+                                                    style={actionBtnStyle('#FF6B35')}
+                                                >
+                                                    <i className="fa-solid fa-people-group" style={{ color: '#000', fontSize: '0.8rem' }}></i>
+                                                </button>
+                                                <button
                                                     onClick={() => toggleCircleVisibility(circle.id)}
                                                     title={isVisible ? "Masquer ce cercle" : "Afficher ce cercle"}
                                                     style={actionBtnStyle(
@@ -254,13 +261,6 @@ const FriendsPanel = ({ isOpen, onClose }) => {
                                                         className={`fa-solid ${isVisible ? 'fa-eye' : 'fa-eye-slash'}`}
                                                         style={{ color: isVisible ? '#000' : '#888', fontSize: '0.8rem' }}
                                                     ></i>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleViewMembers(circle)}
-                                                    title="Voir les membres"
-                                                    style={actionBtnStyle('#FF6B35')}
-                                                >
-                                                    <i className="fa-solid fa-users" style={{ color: '#000', fontSize: '0.8rem' }}></i>
                                                 </button>
                                                 {confirmLeave === circle.id ? (
                                                     <button
@@ -533,7 +533,7 @@ const FriendsPanel = ({ isOpen, onClose }) => {
                                                                     {member.displayName || 'Anonyme'} {isMe && '(moi)'}
                                                                 </div>
                                                                 <div style={{ fontSize: '0.7rem', color: '#888' }}>
-                                                                    {bandCount} band{bandCount > 1 ? 's' : ''} taggué{bandCount > 1 ? 's' : ''}
+                                                                    {bandCount} groupe{bandCount > 1 ? 's' : ''} taggué{bandCount > 1 ? 's' : ''}
                                                                 </div>
                                                             </div>
                                                         </div>

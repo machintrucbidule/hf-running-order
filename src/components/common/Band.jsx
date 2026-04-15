@@ -34,7 +34,7 @@ const PersonIcon3 = ({ color }) => (
 const Band = ({ group, selectGroup, selectedGroupId, playerGroupId, quickPlay, onTagClick, dayStartMinutes, dayEndMinutes, bandFilter }) => {
     const { GROUPE, SCENE, DEBUT, FIN, id } = group;
     const { state, getBandTag, getInterestColor, cycleInterest } = useCheckedState();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const { visibleCircleIds, allVisibleMembers, memberCircleId } = useFriends();
 
     // Refs for auto-scroll overflow detection
@@ -51,13 +51,14 @@ const Band = ({ group, selectGroup, selectedGroupId, playerGroupId, quickPlay, o
 
     // Friend indicators split: member circle (left zone) vs followed circles (top right)
     const { memberFriendsTags, followedFriendsTags } = useMemo(() => {
-        if (visibleCircleIds.size === 0 || !allVisibleMembers.length || !user) {
+        if (visibleCircleIds.size === 0 || !allVisibleMembers.length || (!user && !authLoading)) {
             return { memberFriendsTags: [], followedFriendsTags: [] };
         }
+        const uid = user?.uid || localStorage.getItem('friends_cacheUid');
         const member = [];
         const followed = [];
         for (const m of allVisibleMembers) {
-            if (m.id === user.uid) continue;
+            if (uid && m.id === uid) continue;
             if (!m.taggedBands?.[id]?.interest) continue;
             const tag = {
                 name: m.displayName || 'Anonyme',
@@ -71,7 +72,7 @@ const Band = ({ group, selectGroup, selectedGroupId, playerGroupId, quickPlay, o
             }
         }
         return { memberFriendsTags: member, followedFriendsTags: followed };
-    }, [visibleCircleIds, allVisibleMembers, id, user, memberCircleId]);
+    }, [visibleCircleIds, allVisibleMembers, id, user, authLoading, memberCircleId]);
 
     // Highest interest level among followed circle friends
     const followedHighestInterest = useMemo(() => {
